@@ -5,13 +5,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Position.fs" />
+    <Compile Include="Positions.fs" />
     <Compile Include="Player.fs" />
     <Compile Include="Move.fs" />
     <Compile Include="Moves.fs" />
     <Compile Include="Cell.fs" />
     <Compile Include="GameResult.fs" />
     <Compile Include="Helpers.fs" />
+    <Compile Include="Board.fs" />
     <Compile Include="Game.fs" />
   </ItemGroup>
 

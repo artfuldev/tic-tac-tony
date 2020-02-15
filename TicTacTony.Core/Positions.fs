@@ -28,3 +28,16 @@ module Positions =
     [| NW; C; SE |]
     [| NE; C; SW |]
   |]
+
+  let grid = Array.take 3 wins
+
+  let toString = function
+    | NW -> "NW"
+    | N -> "N"
+    | NE -> "NE"
+    | W -> "W"
+    | C -> "C"
+    | E -> "E"
+    | SW -> "SW"
+    | S -> "S"
+    | SE -> "SE"

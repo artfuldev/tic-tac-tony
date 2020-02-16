@@ -7,15 +7,15 @@ type IGame =
   ; PlayerAt: Position -> Player option
   }
   
-and IFilled =
+type IFilled =
   { IsDraw: unit -> bool
   }
   
-and ICompleted =
+type ICompleted =
   { WhoWon: unit -> Player option
   }
   
-and IUndoable =
+type IUndoable =
   { TakeBack: unit -> Game
   }
 

@@ -33,7 +33,7 @@ module Game =
 
   let private _board = function
     | Playable New -> empty
-    | Playable (InProgress moves) | Complete (moves, _) -> forMoves moves
+    | Playable (InProgress moves) | Complete (moves, _) -> played moves
     
   let player = function
     | New -> X
@@ -81,7 +81,8 @@ module Game =
     | Won player -> Some player
     | Drawn -> None
         
-  let takeBack = function
+  let takeBack game = function
+    game.has_previous
     | Playable New -> None
     | Playable (InProgress (First _)) -> Playable New |> Some
     | Playable (InProgress (Next (_, moves))) -> Playable (InProgress moves) |> Some

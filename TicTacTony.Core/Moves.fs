@@ -26,3 +26,11 @@ module Moves =
 
   let positionsOf player' =
     list >> (List.filter (player >> ((=) player'))) >> (List.map (position))
+
+  let internal undo = function
+    | First _ -> None
+    | Next (_, moves) -> Some moves
+
+  let internal make move = function
+    | None -> First move
+    | Some moves -> Next (move, moves)

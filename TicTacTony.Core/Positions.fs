@@ -29,8 +29,6 @@ module Positions =
     [| NE; C; SW |]
   |]
 
-  let grid = Array.take 3 wins
-
   let toString = function
     | NW -> "NW"
     | N -> "N"

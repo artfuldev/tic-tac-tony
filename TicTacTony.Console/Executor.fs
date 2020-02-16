@@ -29,7 +29,7 @@ module Executor =
     let _ = match completed with | Some completed -> printfn "Winner: %O" (completed.WhoWon ()) | None -> ()
     let _ = match filled with | Some filled -> printfn "IsDrawn: %O" (filled.IsDraw ()) | None -> ()
     let command = read (options filled completed undoable playable game)
-    let _ = printfn "%s: " (Commands.toDescription command)
+    let _ = printfn "%s" (Commands.toDescription command)
     in
       match command with
       | New -> execute NewGame

@@ -1,6 +1,7 @@
 ﻿namespace TicTacTony.Core
 
 type Player = 
+  internal 
   | X
   | O
 

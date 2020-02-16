@@ -2,6 +2,7 @@
 
 open Cell
 open System
+open Moves
 
 type Board =
   private 
@@ -40,9 +41,18 @@ module Board =
   let internal empty =
     Empty
 
+  let internal player = function
+    | Empty -> X
+    | Played moves -> if count moves % 2 <> 1 then X else O
+
   let internal moves = function
     | Empty -> None
     | Played moves -> Some moves
+
+  let unoccupied = function
+    | Empty -> []
+    | Played moves ->
+      let occupied x = List.contains x (Moves.positions moves) in Positions.all |> List.filter (not << occupied)
 
   let internal played moves =
     Played moves
@@ -53,6 +63,10 @@ module Board =
   let private cells = function
     | Empty -> Array.create 3 (Array.create 3 Cell.Empty)
     | Played moves -> Array.map (Array.map (create moves)) grid
+
+  let internal playerAt position = function
+    | Empty -> None
+    | Played moves -> playerAt position moves
 
   let print =
     cells >> _print

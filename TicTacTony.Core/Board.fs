@@ -50,7 +50,7 @@ module Board =
     | Played moves -> Some moves
 
   let unoccupied = function
-    | Empty -> []
+    | Empty -> Positions.all
     | Played moves ->
       let occupied x = List.contains x (Moves.positions moves) in Positions.all |> List.filter (not << occupied)
 

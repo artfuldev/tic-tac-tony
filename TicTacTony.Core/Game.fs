@@ -51,7 +51,7 @@ and DrawnGame =
   }
 
 and Game =
-  | New of IGame * IPlayable
+  | Begun of IGame * IPlayable
   | InProgress of IGame * IUndoable * IPlayable
   | Won of IGame * IFilled option * ICompleted * IUndoable
   | Drawn of IGame * IFilled * ICompleted * IUndoable
@@ -104,6 +104,6 @@ module Game =
     in { Player = player; Choices = choices; Move = move playable undoable player board }
 
   and NewGame =
-      New (game Empty, playable Empty)
+      Begun (game Empty, playable Empty)
     
     

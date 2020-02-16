@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Commands.fs" />
+    <Compile Include="Parser.fs" />
+    <Compile Include="Reader.fs" />
+    <Compile Include="Executor.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

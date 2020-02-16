@@ -23,12 +23,8 @@ module Executor =
 
   open Game
   let rec private _execute filled completed undoable playable game game' =
-    let impossible () =
-      printfn "impossible!" |> exit 1
-    let iff f x =
-      match x with
-      | Some x -> f x
-      | None -> impossible ()
+    let impossible () = printfn "impossible!" |> exit 1
+    let iff f x = match x with | Some x -> f x | None -> impossible ()
     let _ = match game with | Some game -> printfn "\n%s" (Board.print game.Board) | None -> ()
     let _ = match completed with | Some completed -> printfn "Winner: %O" (completed.WhoWon ()) | None -> ()
     let _ = match filled with | Some filled -> printfn "IsDrawn: %O" (filled.IsDraw ()) | None -> ()

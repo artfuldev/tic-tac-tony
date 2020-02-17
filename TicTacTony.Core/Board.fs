@@ -49,7 +49,7 @@ module Board =
     | Empty -> None
     | Played moves -> Some moves
 
-  let unoccupied = function
+  let internal unoccupied = function
     | Empty -> Positions.all
     | Played moves ->
       let occupied x = List.contains x (Moves.positions moves) in Positions.all |> List.filter (not << occupied)
@@ -68,5 +68,5 @@ module Board =
     | Empty -> None
     | Played moves -> playerAt position moves
 
-  let print =
+  let toString =
     cells >> _print

@@ -12,12 +12,9 @@ module Parser =
       then [ for g in result.Groups -> g.Value ] |> List.tail |> Some
       else None
 
-  let private _position value =
-    all |> List.tryFind (toString >> ((=) value))
-
   let parse = function
-    | Regex "^M (NW|N|NE|W|C|E|SW|S|SE)$" [position] -> Option.map Move (_position position)
-    | Regex "^P (NW|N|NE|W|C|E|SW|S|SE)$" [position] -> Option.map PlayerAt (_position position)
+    | Regex "^M (NW|N|NE|W|C|E|SW|S|SE)$" [position] -> Option.map Move (parse position)
+    | Regex "^P (NW|N|NE|W|C|E|SW|S|SE)$" [position] -> Option.map PlayerAt (parse position)
     | Regex "^I$" _ -> Some IsDraw
     | Regex "^W$" _ -> Some WhoWon
     | Regex "^T$" _ -> Some TakeBack

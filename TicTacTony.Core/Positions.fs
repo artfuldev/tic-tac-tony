@@ -1,6 +1,7 @@
 ﻿namespace TicTacTony.Core
 
 type Position =
+  internal
   | NW
   | N
   | NE
@@ -39,3 +40,6 @@ module Positions =
     | SW -> "SW"
     | S -> "S"
     | SE -> "SE"
+
+  let parse value =
+    all |> List.tryFind (toString >> ((=) value))

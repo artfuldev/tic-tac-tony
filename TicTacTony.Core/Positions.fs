@@ -19,17 +19,6 @@ module Positions =
       W; C; E;
       SW; S; SE ]
 
-  let wins = [|
-    [| NW; N; NE |]
-    [| W; C; E |]
-    [| SW; S; SE |]
-    [| NW; W; SW |]
-    [| N; C; S |]
-    [| NE; E; SE |]
-    [| NW; C; SE |]
-    [| NE; C; SW |]
-  |]
-
   let toString = function
     | NW -> "NW"
     | N -> "N"

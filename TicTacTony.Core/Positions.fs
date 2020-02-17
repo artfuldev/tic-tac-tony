@@ -14,7 +14,7 @@ type Position =
 
 module Positions =
 
-  let all =
+  let internal all =
     [ NW; N; NE;
       W; C; E;
       SW; S; SE ]

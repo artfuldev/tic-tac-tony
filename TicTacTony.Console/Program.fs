@@ -1,7 +1,10 @@
 ﻿namespace TicTacTony.Console
 
+open Executor
+open TicTacTony.Core.Game
+
 module Program =
   [<EntryPoint>]
-  let main argv =
+  let main _ =
     printfn "Welcome to TicTacTony!!!"
-    Executor.start ()
+    play NewGame

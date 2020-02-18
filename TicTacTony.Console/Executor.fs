@@ -4,6 +4,8 @@ open TicTacTony.Core
 open Option
 open TicTacTony.Console
 open Reader
+open Helpers
+open System
 
 module Executor =
   
@@ -19,35 +21,41 @@ module Executor =
     |> List.concat
     |> List.choose id
 
-  let private winner = function
-    | Some x -> sprintf "The winner is %s." (Player.toString x)
-    | None -> "Nobody won."
+  let private playerAt p g =
+    let sprint = sprintf "The cell at %s is %s" (Positions.toString p)
+    let suffix = match g.PlayerAt p with | Some x -> sprintf "filled by %s" (Player.toString x) | None -> "empty"
+    in sprint suffix
 
-  let private drawn = function
-    | true -> "It's a draw."
-    | false -> "It's not a draw."
+  let private winner c =
+    match c.WhoWon() with | Some x -> sprintf "The winner is %s." (Player.toString x) | None -> "Nobody won."
+
+  let private drawn f =
+    if f.IsDraw () then "It's a draw." else "It's not a draw."
+
+  let private takeBack u =
+    u.TakeBack ()
+
+  let private move x p =
+    p.Moves |> List.find (Move.position >> ((=) x)) |> p.Move
 
   let rec private step game g f c u p =
-    let print = printfn "%s"
-    let _ = print "\n"
-    let _ = Board.toString g.Board |> print
-    let _ = iter (fun f -> (f.IsDraw () |> drawn) |> print) f
-    let _ = iter (fun c -> (c.WhoWon () |> winner) |> print) c
+    let _ = Board.toString g.Board |> printfn "\n%s"
     let command = read (options g f c u p)
     in handle game g f c u p command
 
   and private handle game g f c u p command =
-      let impossible () = printfn "impossible!" |> exit 1
-      let iff f x = match x with | Some x -> f x | None -> impossible ()
+      let print = printfn "%s\nPress any key to proceed..." >> Console.ReadKey >> ignore
+      let current f x = let _ = iter (f >> print) x in game
+      let next f x = map f x |> defaultValue game
       let _ = printfn "%s" (Commands.toDescription command)
       in
         match command with
-        | New -> play Game.NewGame
-        | Move p' -> iff (fun p -> p.Moves |> List.find (Move.position >> ((=) p')) |> p.Move |> play) p
-        | PlayerAt position -> let _ = printfn "%O" (g.PlayerAt position) in play game
-        | IsDraw -> iff (fun f -> let _ = printfn "%O" (f.IsDraw ()) in play game) f
-        | WhoWon -> iff (fun c -> let _ = printfn "%O" (c.WhoWon ()) in play game) c
-        | TakeBack -> iff (fun u -> play (u.TakeBack ())) u
+        | New -> Game.NewGame |> play
+        | Move x -> p |> next (move x) |> play
+        | PlayerAt x -> Some g |> current (playerAt x) |> play
+        | IsDraw -> f |> current drawn |> play
+        | WhoWon -> c |> current winner |> play
+        | TakeBack -> u |> next takeBack |> play
         | Exit -> exit 0
 
   and play game =

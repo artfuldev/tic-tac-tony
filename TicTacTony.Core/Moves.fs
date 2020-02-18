@@ -2,35 +2,22 @@
 
 open Move
 
-type Moves =
-  private
-  | First of Move
-  | Next of Move * Moves
+type Moves = private | First of Move | Next of Move * Moves
 
 module Moves =
 
-  let rec playerAt position = function
-    | First move -> if Move.position move = position then Some (Move.player move) else None
-    | Next (move, moves) -> if Move.position move = position then Some (Move.player move) else playerAt position moves
+  let rec internal playerAt x = function
+    | First (Move (y, p)) when x = y -> Some p
+    | Next (Move (y, p), _) when x = y -> Some p
+    | Next (_, ms) -> playerAt x ms
+    | _ -> None
 
-  let rec count = function
-    | First _ -> 1
-    | Next (_, moves) -> 1 + count moves
+  let rec internal count = function | First _ -> 1 | Next (_, ms) -> 1 + count ms
 
-  let rec list = function
-    | First move -> [move]
-    | Next (move, moves) -> move::(list moves) |> List.rev
+  let rec private list = function | First m -> [m] | Next (m, ms) -> m::(list ms) |> List.rev
 
-  let positions =
-    list >> List.map position
+  let internal positions = list >> Seq.map position
 
-  let positionsOf player' =
-    list >> (List.filter (player >> ((=) player'))) >> (List.map (position))
+  let internal undo = function | First _ -> None | Next (_, ms) -> Some ms
 
-  let internal undo = function
-    | First _ -> None
-    | Next (_, moves) -> Some moves
-
-  let internal make move = function
-    | None -> First move
-    | Some moves -> Next (move, moves)
+  let internal make m = function | None -> First m | Some ms -> Next (m, ms)

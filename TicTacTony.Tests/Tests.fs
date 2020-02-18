@@ -6,45 +6,39 @@ open Xunit
 open TicTacTony.Core
 open Board
 open Matchers
+open Game
+open Move
+open Helpers
+
 
 module Tests =
-
-    let private fail _ =
-        false |> should equal true
-
-    let private move game x =
-        match game with
-        | Fresh (_, p) | Played (_, _, p) ->
-           p.Moves |> Seq.find (Move.position >> ((=) x)) |> p.Move
-        | _ -> failwith "not found"
     
+    let private fail () = failwith "impossible"
+
+    let private move x =
+        let play p = p.Moves |> Seq.find (position >> ((=) x)) |> p.Move
+        in ifPlayable fail play
+
     let private position value = positions |> Seq.find (string >> ((=) value))
 
     let private parse value =
-        let positions (value: string) = value.Split " " |> Seq.filter ((<>) "")
-        in value |> positions |> Seq.map position |> Seq.fold move Game.NewGame
+        let xs (value: string) = value.Split " " |> Seq.filter ((<>) "")
+        in value |> xs |> Seq.map position |> Seq.fold (flip move) NewGame
 
     [<Theory>]
     [<InlineData ("NW N", "NE", "NW N NE")>]
     [<InlineData ("", "NW", "NW")>]
     let ``In a playable game, a valid move can be made to get a resulting game``
         (moves: string)  (next: string) (result: string) =
-        let current = moves |> parse
         let expected = result |> parse
-        let result = move current (next |> position)
-        in result |> should match' expected
+        in moves |> parse |> move (next |> position) |> should match' expected
         
     [<Theory>]
     [<InlineData ("NW N NE", "NW N")>]
     let ``Once a move is played, it can be undone``
         (moves: string)  (previous: string) =
-        let current = moves |> parse
-        let expected = previous |> parse
-        in
-            match current with
-            | Played (_, u, _) | Won (_, _, _, u) | Drawn (_, _, _, u) ->
-                u.TakeBack () |> should match' expected
-            | _ -> fail ()
+        let test u = u.TakeBack () |> should match' (previous |> parse)
+        in moves |> parse |> ifUndoable fail test
 
     [<Theory>]
     [<InlineData ("NW N SE E C", "X")>]
@@ -52,10 +46,8 @@ module Tests =
     [<InlineData ("NW C SE N S SW NE E W", "_")>]
     let ``In a completed game, the winner can be queried``
         (moves: string)  (winner: string) =
-        match moves |> parse with
-        | Won (_, _, o, _) | Drawn (_, _, o, _) ->
-            o.WhoWon () |> should match' winner
-        | _ -> fail ()
+        let test o = o.WhoWon () |> should match' winner
+        in moves |> parse |> ifOver fail test
 
     [<Theory>]
     [<InlineData ("NW C SE N S SW NE W E", "NW", "X")>]
@@ -64,17 +56,13 @@ module Tests =
     [<InlineData ("", "SE", "_")>]
     let ``In any game, player at can be queried``
         (moves: string)  (x: string) (player: string) =
-        match moves |> parse with
-        | Fresh (g, _) | Played (g, _, _) | Won (g, _, _, _)
-        | Drawn (g, _, _ , _) ->
-            x |> position |> g.PlayerAt |> should match' player
+        let test g = x |> position |> g.PlayerAt |> should match' player
+        in moves |> parse |> onGame test
 
     [<Theory>]
     [<InlineData ("NW C SE N S SW NE W E", false)>]
     [<InlineData ("NW C SE N S SW NE E W", true)>]
     let ``In a filled game, is draw can be queried``
         (moves: string)  (drawn: bool) =
-        match moves |> parse with
-        | Won (_, Some f, _, _) | Drawn (_, f, _, _) ->
-            f.IsDraw () |> should equal drawn
-        | _ -> fail ()
+        let test f = f.IsDraw () |> should equal drawn
+        in moves |> parse |> ifFull fail test

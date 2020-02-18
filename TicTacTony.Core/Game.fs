@@ -12,7 +12,6 @@ type IUndoable = { TakeBack: unit -> Game }
 and IPlayable = { Player: Player; Move: Move -> Game; Moves: Move seq }
 
 and Game =
-    private
     | Fresh of IGame * IPlayable
     | Played of IGame * IUndoable * IPlayable
     | Won of IGame * IFull option * IOver * IUndoable
@@ -65,20 +64,3 @@ module Game =
             }
 
     and NewGame = Fresh (game (Board []), playable (Board []))
-    
-    let onGame f = function
-        | Fresh (g, _) | Played (g, _, _) | Won (g, _, _, _)
-        | Drawn (g, _, _, _) -> f g
-    
-    let ifPlayable f = function
-        | Fresh (_, p) | Played (_, _, p) -> Some (f p) | _ -> None
-    
-    let ifFull g = function
-        | Won (_, Some f, _, _) | Drawn (_, f, _, _) -> Some (g f) | _ -> None
-    
-    let ifOver f = function
-        | Won (_, _, o, _) | Drawn (_, _, o, _) -> Some (f o) | _ -> None
-    
-    let ifUndoable f = function
-        | Played (_, u, _) | Won (_, _, _, u) | Drawn (_, _, _, u) -> Some (f u)
-        | _ -> None

@@ -1,11 +1,9 @@
 ﻿namespace TicTacTony.Core
 
 open System
-open Positions
 open Helpers
 open Option
 open Moves
-open Player
 
 
 type Board =
@@ -32,34 +30,32 @@ module Board =
             |> Seq.tryHead
     
     let internal player = function
-        | Empty -> X
-        | Has moves -> if count moves % 2 <> 1 then X else O
+        | Empty -> X | Has moves -> if count moves % 2 <> 1 then X else O
 
-    let internal moves = function
-        | Empty -> None
-        | Has moves -> Some moves
+    let internal moves = function | Empty -> None | Has moves -> Some moves
 
-    let internal isFull =
-        moves >> map count >> map ((=) 9) >> defaultValue false
+    let internal isFull = function
+        | Empty -> false | Has moves -> moves |> count |> ((=) 9)
 
     let internal isWon =
         winner >> isSome
+    
+    let positions = seq [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
 
     let internal unoccupied = function
-        | Empty -> all
+        | Empty -> positions
         | Has moves ->
-            let occupied = flip Seq.contains (positions moves)
-            in all |> Seq.filter (not << occupied)
+            let occupied = flip Seq.contains (Moves.positions moves)
+            in positions |> Seq.filter (not << occupied)
 
     let internal playerAt position = function
-        | Empty -> None
-        | Has moves -> playerAt position moves
+        | Empty -> None | Has moves -> playerAt position moves
 
     let toString board =
         let player =
             match board with
             | Empty -> k None | Has moves -> flip Moves.playerAt moves
-        let rows = all |> Seq.chunkBySize 3 |> Seq.map (Seq.map player)
+        let rows = positions |> Seq.chunkBySize 3 |> Seq.map (Seq.map player)
         let row r =
-            String.Join(" ", Seq.map (map toString >> defaultValue "_") r)
+            String.Join(" ", Seq.map (map string >> defaultValue "_") r)
         in String.Join ("\n", Seq.map row rows)

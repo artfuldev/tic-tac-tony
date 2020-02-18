@@ -1,13 +1,7 @@
 ﻿namespace TicTacTony.Core
 
-open Helpers
 
-
-type IGame =
-    { Board: Board
-    ; PlayerAt: Position -> Player option
-    ; Positions: Position seq
-    }
+type IGame = { Board: Board; PlayerAt: Position -> Player option }
 
 type IFull = { IsDraw: unit -> bool }
 
@@ -25,12 +19,12 @@ and Game =
 
 module Game =
 
-    open Positions
     open Moves
     open Board
+    open Helpers
     
     let private game board =
-        { Board = board; PlayerAt = flip playerAt board; Positions = all }
+        { Board = board; PlayerAt = flip playerAt board; }
 
     let private full board =
         let isDraw _ = s (isFull >> (&&)) (not << isWon) board

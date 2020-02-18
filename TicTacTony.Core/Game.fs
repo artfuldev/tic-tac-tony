@@ -2,107 +2,72 @@
 
 open Helpers
 
-type IGame =
-  { Board: Board
-  ; PlayerAt: Position -> Player option
-  ; Positions: Position list
-  }
+type IGame = { Board: Board; PlayerAt: Position -> Player option; Positions: Position seq }
   
-type IFilled =
-  { IsDraw: unit -> bool
-  }
+type IFull = { IsDraw: unit -> bool }
   
-type ICompleted =
-  { WhoWon: unit -> Player option
-  }
+type IOver = { WhoWon: unit -> Player option }
   
-type IUndoable =
-  { TakeBack: unit -> Game
-  }
+type IUndoable = { TakeBack: unit -> Game }
 
-and IPlayable =
-  { Player: Player
-  ; Move: Move -> Game
-  ; Moves: Move list
-  }
+and IPlayable = { Player: Player; Move: Move -> Game; Moves: Move seq }
 
-and NewGame =
-  { Game: IGame
-  ; Playable: IPlayable
-  }
+and NewGame = { Game: IGame; Playable: IPlayable }
 
-and InProgressGame =
-  { Game: IGame
-  ; Undoable: IUndoable
-  ; Playable: IPlayable
-  }
+and InProgressGame = { Game: IGame; Undoable: IUndoable; Playable: IPlayable }
 
-and WonGame =
-  { Game: IGame
-  ; Filled: IFilled option
-  ; Completed: ICompleted
-  ; Undoable: IUndoable
-  }
+and WonGame = { Game: IGame; Filled: IFull option; Over: IOver; Undoable: IUndoable }
 
-and DrawnGame =
-  { Game: IGame
-  ; Filled: IFilled
-  ; Completed: ICompleted
-  ; Undoable: IUndoable
-  }
+and DrawnGame = { Game: IGame; Filled: IFull; Over: IOver; Undoable: IUndoable }
 
 and Game =
-  | Begun of IGame * IPlayable
-  | InProgress of IGame * IUndoable * IPlayable
-  | Won of IGame * IFilled option * ICompleted * IUndoable
-  | Drawn of IGame * IFilled * ICompleted * IUndoable
+  | Fresh of IGame * IPlayable
+  | Played of IGame * IUndoable * IPlayable
+  | Won of IGame * IFull option * IOver * IUndoable
+  | Drawn of IGame * IFull * IOver * IUndoable
 
 module Game =
 
+  open Positions
+  open Moves
+  open Move
+  open Board
+
   let private game board =
-    { Board = board; PlayerAt = flip Board.playerAt board; Positions = Positions.all }
+    { Board = board; PlayerAt = flip playerAt board; Positions = all }
 
-  let private filled board =
-    let filled = Board.moves >> Option.map Moves.count >> Option.map ((=) 9) >> Option.defaultValue false
-    let won = Board.winner >> Option.map (constant true) >> Option.defaultValue false
-    let isDraw _ = S (filled >> (&&)) (not << won) board
-    in if filled board then Some { IsDraw = isDraw } else None
+  let private full board =
+    let isDraw _ = s (isFull >> (&&)) (not << isWon) board
+    in { IsDraw = isDraw }
 
-  let private completed winner =
-    { WhoWon = constant winner }
+  let private over board =
+    let whoWon _ = winner board
+    in { WhoWon = whoWon }
 
   let private move playable undoable board move =
-    let moves' = Moves.make move (Board.moves board)
-    let board' = Played moves'
-    let game = game board'
-    let filled = filled board'
-    let undoable = undoable moves'
-    let winner = Board.winner board'
-    let completed = completed winner
-    let playable = playable board'
-    in
-      match winner with
-      | Some _ -> Won (game, filled, completed, undoable)
-      | None ->
-        match filled with
-        | Some filled -> Drawn (game, filled, completed, undoable)
-        | None -> InProgress (game, undoable, playable)
+    let moves = make move (moves board)
+    let board = Has moves
+    let game = game board
+    let full = full board
+    let undoable = undoable moves
+    let over = over board
+    let playable = playable board
+    let isFull = isFull board
+    let won = Won (game, (if isFull then Some full else None), over, undoable)
+    let drawn = Drawn (game, full, over, undoable)
+    let played = Played (game, undoable, playable)
+    in if isWon board then won else if isFull then drawn else played
 
   let rec private undoable moves =
-    let game' =
-      match Moves.undo moves with
-      | Some moves ->
-        let board = Played moves
-        in InProgress (game board, undoable moves, playable board)
+    let takeBack _ =
+      match undo moves with
+      | Some moves -> let b = Has moves in Played (game b, undoable moves, playable b)
       | None -> NewGame
-    in { TakeBack = constant game' }
+    in { TakeBack = takeBack }
   
   and private playable board =
-    let player = Board.player board
-    let moves = Board.unoccupied board |> List.map (Move.create player)
+    let player = player board
+    let moves = unoccupied board |> Seq.map (fun x -> Move(x, player))
     in { Player = player; Moves = moves; Move = move playable undoable board }
 
-  and NewGame =
-      Begun (game Empty, playable Empty)
-    
-    
+  and NewGame = Fresh (game Empty, playable Empty)

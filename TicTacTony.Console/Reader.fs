@@ -14,6 +14,6 @@ module Reader =
       in
         match Console.ReadLine () |> parse with
         | None -> retry ()
-        | Some command -> if allowed |> List.contains command then command else retry ()
+        | Some command -> if allowed |> Seq.contains command then command else retry ()
     in _read options
 

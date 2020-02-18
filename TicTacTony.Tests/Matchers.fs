@@ -2,34 +2,24 @@
 
 open TicTacTony.Core
 open NHamcrest.Core
+open Option
 
 
 module Matchers =
-    
-    let private board game =
-        match game with
-        | Fresh (g, _) | Played (g, _, _)  | Won (g, _, _, _)
-        | Drawn (g, _, _, _) -> g.Board
 
-    let beGame game =
+    let match' (expected: obj) =
         CustomMatcher (
-            sprintf "be game %O" game,
-            fun (game': obj) ->
-                match game' with
-                | :? Game as game'-> board game' = board game
-                | _ -> false
-        )
-
-    let bePlayer player =
-        CustomMatcher (
-            sprintf "be player %s" player,
-            fun (player': obj) ->
-                match player' with
-                | :? Option<Player> as player' ->
-                    player'
-                    |> Option.map Player.toString
-                    |> Option.defaultValue "_"
-                    |> ((=) player)
+            sprintf "match %O" expected,
+            fun (actual: obj) ->
+                match actual, expected with
+                | (:? Game as game), (:? Game as game') ->
+                    let board game =
+                        match game with
+                        | Fresh (g, _) | Played (g, _, _)  | Won (g, _, _, _)
+                        | Drawn (g, _, _, _) -> g.Board
+                    in board game' = board game
+                | (:? Option<Player> as player), (:? string as player') ->
+                    player |> map string |> defaultValue "_" |> ((=) player')
                 | _ -> false
         )
     

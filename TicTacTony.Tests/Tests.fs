@@ -2,13 +2,10 @@
 
 open FsUnit
 open Xunit
-open FsCheck
 
 open TicTacTony.Core
-open FsCheck.Xunit
 open Board
 open Matchers
-open System
 
 module Tests =
 

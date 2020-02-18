@@ -14,10 +14,10 @@ module Executor =
     let private moves p =
         p.Moves |> Seq.map (position >> Move >> Some)
   
-    let private options g f o u p =
+    let private options f o u p =
         seq [
             defaultValue Seq.empty (map moves p)
-            g.Positions |> Seq.map (PlayerAt >> Some)
+            Board.positions |> Seq.map (PlayerAt >> Some)
             seq [
                 (map (fun (f: IFull) -> IsDraw) f)
                 (map (fun (o: IOver) -> WhoWon) o)
@@ -29,16 +29,16 @@ module Executor =
         |> Seq.choose id
 
     let private playerAt p g =
-        let sprint = sprintf "The cell at %s is %s" (Positions.toString p)
+        let sprint = sprintf "The cell at %s is %s" (string p)
         let suffix =
             match g.PlayerAt p with
-            | Some x -> sprintf "filled by %s" (Player.toString x)
+            | Some x -> sprintf "filled by %s" (string x)
             | None -> "empty"
         in sprint suffix
 
     let private whoWon o =
         match o.WhoWon() with
-        | Some x -> sprintf "The winner is %s." (Player.toString x)
+        | Some x -> sprintf "The winner is %s." (string x)
         | None -> "Nobody won."
 
     let private isDraw f =
@@ -52,7 +52,7 @@ module Executor =
 
     let rec private step game g f o u p =
         let _ = Board.toString g.Board |> printfn "\n%s"
-        let command = read (options g f o u p)
+        let command = read (options f o u p)
         in handle game g f o u p command
 
     and private handle game g f o u p command =

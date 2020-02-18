@@ -1,7 +1,7 @@
 ﻿namespace TicTacTony.Core
 
 
-module Helpers =
+module internal Helpers =
 
     let flip f x y = f y x
     

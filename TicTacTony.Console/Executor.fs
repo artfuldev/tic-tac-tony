@@ -4,7 +4,6 @@ open TicTacTony.Core
 open Option
 open TicTacTony.Console
 open Reader
-open Helpers
 open System
 
 module Executor =
@@ -26,10 +25,10 @@ module Executor =
     let suffix = match g.PlayerAt p with | Some x -> sprintf "filled by %s" (Player.toString x) | None -> "empty"
     in sprint suffix
 
-  let private winner c =
+  let private whoWon c =
     match c.WhoWon() with | Some x -> sprintf "The winner is %s." (Player.toString x) | None -> "Nobody won."
 
-  let private drawn f =
+  let private isDraw f =
     if f.IsDraw () then "It's a draw." else "It's not a draw."
 
   let private takeBack u =
@@ -53,8 +52,8 @@ module Executor =
         | New -> Game.NewGame |> play
         | Move x -> p |> next (move x) |> play
         | PlayerAt x -> Some g |> current (playerAt x) |> play
-        | IsDraw -> f |> current drawn |> play
-        | WhoWon -> c |> current winner |> play
+        | IsDraw -> f |> current isDraw |> play
+        | WhoWon -> c |> current whoWon |> play
         | TakeBack -> u |> next takeBack |> play
         | Exit -> exit 0
 

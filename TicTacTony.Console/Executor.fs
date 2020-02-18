@@ -11,19 +11,18 @@ module Executor =
 
     let private player p' = p' |> map string |> defaultValue "Nobody"
 
-    let private handle continuation game command =
+    let private handle next game command =
         let _ = command |> Commands.toDescription |> printfn "%s"
         let print = printfn "%s" >> k game
-        let game' =
+        in
             match command with
-            | Exit -> exit 0
-            | New -> Game.NewGame
-            | Play (m, p) -> p.Move m
-            | PlayerAt (x, g) -> g.PlayerAt x |> player |> print
-            | IsDraw f -> (if f.IsDraw() then "Yes" else "No") |> print
-            | WhoWon o -> o.WhoWon() |> player |> print
-            | TakeBack u -> u.TakeBack ()
-        in game' |> continuation
+            | Exit -> 0
+            | New -> Game.NewGame |> next
+            | Play (m, p) -> p.Move m |> next
+            | PlayerAt (x, g) -> g.PlayerAt x |> player |> print |> next
+            | IsDraw f -> (if f.IsDraw() then "Yes" else "No") |> print |> next
+            | WhoWon o -> o.WhoWon() |> player |> print |> next
+            | TakeBack u -> u.TakeBack () |> next
 
     let rec play game =
         match game with

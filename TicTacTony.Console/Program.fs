@@ -8,5 +8,5 @@ module Program =
     
     [<EntryPoint>]
     let main _ =
-        printfn "Welcome to TicTacTony!!!"
-        play NewGame
+        let _ = printfn "Welcome to TicTacTony!!!"
+        in play NewGame

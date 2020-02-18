@@ -13,19 +13,18 @@ open Game
 module Executor =
 
     let private moves p =
-        p.Moves |> Seq.map (position >> Move >> Some)
+        p.Moves |> Seq.map (position >> Move)
   
     let private options game =
         [ ifPlayable (k Seq.empty) moves
-        ; Board.positions |> Seq.map (PlayerAt >> Some) |> k
-        ; ifFull (k Seq.empty) (k (Seq.singleton (Some IsDraw)))
-        ; ifOver (k Seq.empty) (k (Seq.singleton (Some WhoWon)))
-        ; ifUndoable (k Seq.empty) (k (Seq.singleton (Some TakeBack)))
-        ; seq [Some New; Some Exit] |> k
+        ; k (Board.positions |> Seq.map PlayerAt)
+        ; ifFull (k Seq.empty) (k (Seq.singleton IsDraw))
+        ; ifOver (k Seq.empty) (k (Seq.singleton WhoWon))
+        ; ifUndoable (k Seq.empty) (k (Seq.singleton TakeBack))
+        ; k (seq [New; Exit])
         ]
         |> Seq.map (apply game)
         |> Seq.concat
-        |> Seq.choose id
 
     let private player p' = p' |> map string |> defaultValue "Nobody"
 

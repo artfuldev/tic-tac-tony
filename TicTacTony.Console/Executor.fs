@@ -35,10 +35,9 @@ module Executor =
 
     let private move x p = p.Moves |> Seq.find (position >> ((=) x)) |> p.Move
 
-    let private handle continuation game command =
+    let private handle succeed fail game command =
         let print = printfn "%s" >> k game
         let game = command |> Commands.toDescription |> print
-        let fail _ = failwith "impossible"
         let play =
             match command with
             | Exit -> fun _ -> exit 0
@@ -48,8 +47,9 @@ module Executor =
             | IsDraw -> ifFull (isDraw >> print)
             | WhoWon -> ifOver (whoWon >> print)
             | TakeBack -> ifUndoable takeBack
-        in game |> play |> defaultWith fail |> continuation
+        in game |> play |> defaultWith fail |> succeed
 
     let rec play game =
         let print = onGame (fun g -> Board.toString g.Board |> printfn "\n%s")
-        in s (handle play) (print >> k game >> options >> read) game
+        let fail _ = failwith "impossible"
+        in s (handle play fail) (print >> k game >> options >> read) game

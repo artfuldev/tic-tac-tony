@@ -17,28 +17,6 @@ type IUndoable = { TakeBack: unit -> Game }
 
 and IPlayable = { Player: Player; Move: Move -> Game; Moves: Move seq }
 
-and NewGame = { Game: IGame; Playable: IPlayable }
-
-and InProgressGame =
-    { Game: IGame
-    ; Undoable: IUndoable
-    ; Playable: IPlayable
-    }
-
-and WonGame =
-    { Game: IGame
-    ; Filled: IFull option
-    ; Over: IOver
-    ; Undoable: IUndoable
-    }
-
-and DrawnGame =
-    { Game: IGame
-    ; Filled: IFull
-    ; Over: IOver
-    ; Undoable: IUndoable
-    }
-
 and Game =
     | Fresh of IGame * IPlayable
     | Played of IGame * IUndoable * IPlayable

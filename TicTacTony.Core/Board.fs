@@ -48,7 +48,7 @@ module Board =
         | Board ms -> Board (m::ms)
 
     let internal undo = function
-        | Board [] -> failwith "impossible" | Board (_::xs) -> Board xs
+        | Board [] -> failwith "impossible" | Board (_::ms) -> Board ms
 
     let toString board =
         let player = flip playerAt board

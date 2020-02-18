@@ -59,21 +59,19 @@ and Game =
 
 module Game =
 
-  let internal game board =
+  let private game board =
     { Board = board; PlayerAt = flip Board.playerAt board; Positions = Positions.all }
 
-  let internal _filled board =
-    { IsDraw = if Option.isNone (Board.winner board) then constant true else constant false }
-  
-  let internal filled board =
-    match Board.moves board with
-    | Some moves -> if Moves.count moves = 9 then Some (_filled board) else None
-    | _ -> None
+  let private filled board =
+    let filled = Board.moves >> Option.map Moves.count >> Option.map ((=) 9) >> Option.defaultValue false
+    let won = Board.winner >> Option.map (constant true) >> Option.defaultValue false
+    let isDraw _ = S (filled >> (&&)) (not << won) board
+    in if filled board then Some { IsDraw = isDraw } else None
 
-  let internal completed winner =
+  let private completed winner =
     { WhoWon = constant winner }
 
-  let internal move playable undoable board move =
+  let private move playable undoable board move =
     let moves' = Moves.make move (Board.moves board)
     let board' = Played moves'
     let game = game board'
@@ -90,7 +88,7 @@ module Game =
         | Some filled -> Drawn (game, filled, completed, undoable)
         | None -> InProgress (game, undoable, playable)
 
-  let rec internal undoable moves =
+  let rec private undoable moves =
     let game' =
       match Moves.undo moves with
       | Some moves ->
@@ -99,7 +97,7 @@ module Game =
       | None -> NewGame
     in { TakeBack = constant game' }
   
-  and internal playable board =
+  and private playable board =
     let player = Board.player board
     let moves = Board.unoccupied board |> List.map (Move.create player)
     in { Player = player; Moves = moves; Move = move playable undoable board }

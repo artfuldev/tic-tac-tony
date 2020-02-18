@@ -4,7 +4,6 @@ open TicTacTony.Core
 open Option
 open TicTacTony.Console
 open Reader
-open Move
 open Helpers
 
 
@@ -30,5 +29,5 @@ module Executor =
         match game with
         | Fresh (g, _) | Played (g, _, _) | Won (g, _, _, _)
         | Drawn (g, _, _, _) ->
-            let print _ = g.Board |> Board.toString |> printfn "\n%s" |> k game
-            in s (handle play) (print >> read) game
+            let _ = g.Board |> Board.toString |> printfn "\n%s"
+            in s (handle play) read game

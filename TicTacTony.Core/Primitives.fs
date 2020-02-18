@@ -8,7 +8,7 @@ type Position =
 
 type Player = X | O
 
-type Move = private Move of Position * Player
+type Move = internal Move of Position * Player
 
 module Move =
     

@@ -19,7 +19,6 @@ and Game =
 
 module Game =
 
-    open Moves
     open Board
     open Helpers
     
@@ -28,6 +27,9 @@ module Game =
 
     let private full board =
         let isDraw _ = s (isFull >> (&&)) (not << isWon) board
+        let full = isFull board
+        let winner = winner board
+        let isWon = isWon board
         in { IsDraw = isDraw }
 
     let private over board =
@@ -35,11 +37,10 @@ module Game =
         in { WhoWon = whoWon }
 
     let private move playable undoable board move =
-        let moves = make move (moves board)
-        let board = Has moves
+        let board = make move board
         let game = game board
         let full = full board
-        let undoable = undoable moves
+        let undoable = undoable board
         let over = over board
         let playable = playable board
         let isFull = isFull board
@@ -49,13 +50,11 @@ module Game =
         let played = Played (game, undoable, playable)
         in if isWon board then won else if isFull then drawn else played
 
-    let rec private undoable moves =
+    let rec private undoable board =
         let takeBack _ =
-            match undo moves with
-            | Some moves ->
-                let board = Has moves
-                in Played (game board, undoable moves, playable board)
-            | None -> NewGame
+            match undo board with
+            | Board [] -> NewGame
+            | board -> Played (game board, undoable board, playable board)
         in { TakeBack = takeBack }
   
     and private playable board =
@@ -67,4 +66,4 @@ module Game =
             ; Move = move playable undoable board
             }
 
-    and NewGame = Fresh (game Empty, playable Empty)
+    and NewGame = Fresh (game (Board []), playable (Board []))

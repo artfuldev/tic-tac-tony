@@ -19,7 +19,7 @@ module Executor =
         ; ifUndoable (Seq.singleton TakeBack |> k)
         ; seq [New; Exit] |> Some |> k
         ]
-        |> Seq.map (apply game)
+        |> Seq.map ((|>) game)
         |> Seq.choose id
         |> Seq.concat
 

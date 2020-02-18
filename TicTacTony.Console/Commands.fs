@@ -17,8 +17,8 @@ type Command =
 module Commands =
 
     let toShortString = function
-        | Move position -> let p = toString position in sprintf "M %-2s" p
-        | PlayerAt position -> let p = toString position in sprintf "P %-2s" p
+        | Move x -> let p = toString x in sprintf "M %-2s" p
+        | PlayerAt x -> let p = toString x in sprintf "P %-2s" p
         | IsDraw -> "I"
         | WhoWon -> "W"
         | TakeBack -> "T"
@@ -26,8 +26,8 @@ module Commands =
         | Exit -> "E"
 
     let toDescription = function
-        | Move position -> let p = toString position in sprintf "Move at position %s" p
-        | PlayerAt position -> let p = toString position in sprintf "Player at position %s" p
+        | Move x -> let p = toString x in sprintf "Move at position %s" p
+        | PlayerAt x -> let p = toString x in sprintf "Player at position %s" p
         | IsDraw -> "Is the position a draw?"
         | WhoWon -> "Who won this game?"
         | TakeBack -> "Take back last move"

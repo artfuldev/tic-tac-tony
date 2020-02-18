@@ -8,7 +8,6 @@ type Moves =
     | First of Move
     | Next of Move * Moves
 
-
 module Moves =
 
     let rec internal playerAt x = function

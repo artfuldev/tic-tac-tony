@@ -13,25 +13,23 @@ type Board =
     | Empty
     | Has of Moves
 
-
 module Board =
   
     let private _winner = function
-        | [| Some a; Some b; Some c |] -> if (a = b && b = c) then Some a else None
+        | [ Some a; Some b; Some c ] ->
+            if (a = b && b = c) then Some a else None
         | _ -> None
 
     let internal winner = function
         | Empty -> None
         | Has moves ->
-            let rows = [ [| NW;  N; NE |]; [|  W;  C;  E |]; [| SW;  S; SE |] ]
-            let columns = [ [| NW;  W; SW |]; [|  N;  C;  S |]; [| NE;  E; SE |] ]
-            let diagonals = [ [| NW;  C; SE |]; [| NE;  C; SW |] ]
-            in
-                [ rows; columns; diagonals ]
-                |> Seq.concat
-                |> Seq.map ((Array.map (flip playerAt moves)) >> _winner)
-                |> Seq.choose id
-                |> Seq.tryHead
+            [ [ NW;  N; NE ]; [  W;  C;  E ]; [ SW;  S; SE ]
+            ; [ NW;  W; SW ]; [  N;  C;  S ]; [ NE;  E; SE ]
+            ; [ NW;  C; SE ]; [ NE;  C; SW ]
+            ]
+            |> Seq.map ((List.map (flip playerAt moves)) >> _winner)
+            |> Seq.choose id
+            |> Seq.tryHead
     
     let internal player = function
         | Empty -> X
@@ -58,7 +56,10 @@ module Board =
         | Has moves -> playerAt position moves
 
     let toString board =
-        let player = match board with | Empty -> k None | Has moves -> flip Moves.playerAt moves
+        let player =
+            match board with
+            | Empty -> k None | Has moves -> flip Moves.playerAt moves
         let rows = all |> Seq.chunkBySize 3 |> Seq.map (Seq.map player)
-        let row r = String.Join(" ", Seq.map (map toString >> defaultValue "_") r)
+        let row r =
+            String.Join(" ", Seq.map (map toString >> defaultValue "_") r)
         in String.Join ("\n", Seq.map row rows)

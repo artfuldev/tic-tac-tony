@@ -45,7 +45,6 @@ and Game =
     | Won of IGame * IFull option * IOver * IUndoable
     | Drawn of IGame * IFull * IOver * IUndoable
 
-
 module Game =
 
     open Positions
@@ -81,9 +80,7 @@ module Game =
     let rec private undoable moves =
         let takeBack _ =
             match undo moves with
-            | Some moves ->
-                let board = Has moves
-                in Played (game board, undoable moves, playable board)
+            | Some m -> let b = Has m in Played (game b, undoable m, playable b)
             | None -> NewGame
         in { TakeBack = takeBack }
   

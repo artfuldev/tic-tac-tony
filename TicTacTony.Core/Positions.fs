@@ -7,13 +7,12 @@ type Position =
     |  W |  C |  E
     | SW |  S | SE
 
-
 module Positions =
 
     let internal all =
         seq [
             NW;  N; NE;
-            W;  C;  E;
+             W;  C;  E;
             SW;  S; SE
         ]
     

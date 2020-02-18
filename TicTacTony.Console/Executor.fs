@@ -40,7 +40,7 @@ module Executor =
     let private move x p = p.Moves |> Seq.find (position >> ((=) x)) |> p.Move
 
     let private handle continuation game command =
-        let print = printfn "%s" >> Console.ReadKey >> k game
+        let print = printfn "%s" >> k game
         let fail _ = failwith "impossible"
         let play =
             match command with
@@ -51,8 +51,7 @@ module Executor =
             | IsDraw -> ifFull fail (isDraw >> print)
             | WhoWon -> ifOver fail (whoWon >> print)
             | TakeBack -> ifUndoable fail takeBack
-        let game = Commands.toDescription command |> printfn "%s" |> k game
-        in game |> play |> continuation
+        in command |> Commands.toDescription |> print |> play |> continuation
 
     let rec play game =
         let _ = onGame (fun g -> Board.toString g.Board |> printfn "\n%s") game

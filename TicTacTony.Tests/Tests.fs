@@ -9,7 +9,7 @@ open Matchers
 open Game
 open Move
 open Helpers
-
+open Option
 
 module Tests =
     
@@ -17,7 +17,7 @@ module Tests =
 
     let private move x =
         let play p = p.Moves |> Seq.find (position >> ((=) x)) |> p.Move
-        in ifPlayable fail play
+        in ifPlayable play >> defaultWith fail
 
     let private position value = positions |> Seq.find (string >> ((=) value))
 
@@ -38,7 +38,7 @@ module Tests =
     let ``Once a move is played, it can be undone``
         (moves: string)  (previous: string) =
         let test u = u.TakeBack () |> should match' (previous |> parse)
-        in moves |> parse |> ifUndoable fail test
+        in moves |> parse |> ifUndoable test |> defaultWith fail
 
     [<Theory>]
     [<InlineData ("NW N SE E C", "X")>]
@@ -47,7 +47,7 @@ module Tests =
     let ``In a completed game, the winner can be queried``
         (moves: string)  (winner: string) =
         let test o = o.WhoWon () |> should match' winner
-        in moves |> parse |> ifOver fail test
+        in moves |> parse |> ifOver test |> defaultWith fail
 
     [<Theory>]
     [<InlineData ("NW C SE N S SW NE W E", "NW", "X")>]
@@ -65,4 +65,4 @@ module Tests =
     let ``In a filled game, is draw can be queried``
         (moves: string)  (drawn: bool) =
         let test f = f.IsDraw () |> should equal drawn
-        in moves |> parse |> ifFull fail test
+        in moves |> parse |> ifFull test |> defaultWith fail

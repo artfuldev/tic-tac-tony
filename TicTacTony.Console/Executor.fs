@@ -4,26 +4,23 @@ open TicTacTony.Core
 open Option
 open TicTacTony.Console
 open Reader
-open System
-
 open Move
 open Helpers
 open Game
 
-module Executor =
 
-    let private moves p =
-        p.Moves |> Seq.map (position >> Move)
+module Executor =
   
     let private options game =
-        [ ifPlayable (k Seq.empty) moves
-        ; k (Board.positions |> Seq.map PlayerAt)
-        ; ifFull (k Seq.empty) (k (Seq.singleton IsDraw))
-        ; ifOver (k Seq.empty) (k (Seq.singleton WhoWon))
-        ; ifUndoable (k Seq.empty) (k (Seq.singleton TakeBack))
-        ; k (seq [New; Exit])
+        [ ifPlayable (fun p -> p.Moves |> Seq.map (position >> Move))
+        ; onGame (Board.positions |> Seq.map PlayerAt |> Some |> k)
+        ; ifFull (Seq.singleton IsDraw |> k)
+        ; ifOver (Seq.singleton WhoWon |> k)
+        ; ifUndoable (Seq.singleton TakeBack |> k)
+        ; seq [New; Exit] |> Some |> k
         ]
         |> Seq.map (apply game)
+        |> Seq.choose id
         |> Seq.concat
 
     let private player p' = p' |> map string |> defaultValue "Nobody"
@@ -40,20 +37,19 @@ module Executor =
 
     let private handle continuation game command =
         let print = printfn "%s" >> k game
+        let game = command |> Commands.toDescription |> print
         let fail _ = failwith "impossible"
         let play =
             match command with
             | Exit -> fun _ -> exit 0
-            | New -> k NewGame
-            | Move x -> ifPlayable fail (move x)
-            | PlayerAt x -> onGame (playerAt x >> print)
-            | IsDraw -> ifFull fail (isDraw >> print)
-            | WhoWon -> ifOver fail (whoWon >> print)
-            | TakeBack -> ifUndoable fail takeBack
-        in command |> Commands.toDescription |> print |> play |> continuation
+            | New -> NewGame |> Some |> k
+            | Move x -> ifPlayable (move x)
+            | PlayerAt x -> onGame (playerAt x >> print >> Some)
+            | IsDraw -> ifFull (isDraw >> print)
+            | WhoWon -> ifOver (whoWon >> print)
+            | TakeBack -> ifUndoable takeBack
+        in game |> play |> defaultWith fail |> continuation
 
     let rec play game =
-        let _ = onGame (fun g -> Board.toString g.Board |> printfn "\n%s") game
-        in s (handle play) (options >> read) game
-
-    
+        let print = onGame (fun g -> Board.toString g.Board |> printfn "\n%s")
+        in s (handle play) (print >> k game >> options >> read) game

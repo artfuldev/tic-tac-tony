@@ -70,15 +70,15 @@ module Game =
         | Fresh (g, _) | Played (g, _, _) | Won (g, _, _, _)
         | Drawn (g, _, _, _) -> f g
     
-    let ifPlayable y f = function
-        | Fresh (_, p) | Played (_, _, p) -> f p | _ -> y ()
+    let ifPlayable f = function
+        | Fresh (_, p) | Played (_, _, p) -> Some (f p) | _ -> None
     
-    let ifFull y g = function
-        | Won (_, Some f, _, _) | Drawn (_, f, _, _) -> g f | _ -> y ()
+    let ifFull g = function
+        | Won (_, Some f, _, _) | Drawn (_, f, _, _) -> Some (g f) | _ -> None
     
-    let ifOver y f = function
-        | Won (_, _, o, _) | Drawn (_, _, o, _) -> f o | _ -> y ()
+    let ifOver f = function
+        | Won (_, _, o, _) | Drawn (_, _, o, _) -> Some (f o) | _ -> None
     
-    let ifUndoable y f = function
-        | Played (_, u, _) | Won (_, _, _, u) | Drawn (_, _, _, u) -> f u
-        | _ -> y ()
+    let ifUndoable f = function
+        | Played (_, u, _) | Won (_, _, _, u) | Drawn (_, _, _, u) -> Some (f u)
+        | _ -> None

@@ -27,9 +27,6 @@ module Game =
 
     let private full board =
         let isDraw _ = s (isFull >> (&&)) (not << isWon) board
-        let full = isFull board
-        let winner = winner board
-        let isWon = isWon board
         in { IsDraw = isDraw }
 
     let private over board =

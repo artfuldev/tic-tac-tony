@@ -2,9 +2,11 @@
 
 open Commands
 open Parser
+open System
+
 
 module Reader =
-  open System
+
   let read options =
     let _ = printfn "Choose from:"
     let _ = options |> Seq.map toString |> Seq.iter (printfn "%s")

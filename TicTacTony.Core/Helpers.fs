@@ -2,12 +2,8 @@
 
 module Helpers =
   
-  let flip f x y =
-    f y x
+  let flip f x y = f y x
 
-  let constant x _ =
-    x
+  let k x _ = x
 
-  let S x y z =
-    x z (y z)
-
+  let s x y z = x z (y z)

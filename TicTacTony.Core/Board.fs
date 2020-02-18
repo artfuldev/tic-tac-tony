@@ -4,6 +4,7 @@ open System
 open Helpers
 open Option
 
+
 type Board = internal Board of Move list
 
 module Board =

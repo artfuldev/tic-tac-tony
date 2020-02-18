@@ -38,9 +38,6 @@ module Board =
       |> Seq.choose id
       |> Seq.tryHead
 
-  let internal empty =
-    Empty
-
   let internal player = function
     | Empty -> X
     | Played moves -> if count moves % 2 <> 1 then X else O
@@ -53,9 +50,6 @@ module Board =
     | Empty -> Positions.all
     | Played moves ->
       let occupied x = List.contains x (Moves.positions moves) in Positions.all |> List.filter (not << occupied)
-
-  let internal played moves =
-    Played moves
 
   let private _print cells =
     String.Join ("\n", Array.map (fun row -> String.Join (" ", Array.map toString row)) cells)

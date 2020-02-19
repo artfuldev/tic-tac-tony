@@ -1,7 +1,6 @@
 ﻿namespace TicTacTony.Console
 
 open TicTacTony.Core
-open Option
 open TicTacTony.Console
 open Reader
 open Helpers
@@ -9,7 +8,7 @@ open Helpers
 
 module Executor =
 
-    let private player p' = p' |> map string |> defaultValue "Nobody"
+    let private player = Option.map string >> Option.defaultValue "Nobody"
 
     let private handle next game command =
         let _ = command |> Commands.toDescription |> printfn "%s"

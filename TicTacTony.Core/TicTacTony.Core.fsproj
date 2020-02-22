@@ -7,7 +7,6 @@
   <ItemGroup>
     <Compile Include="Helpers.fs" />
     <Compile Include="Primitives.fs" />
-    <Compile Include="Board.fs" />
     <Compile Include="Game.fs" />
   </ItemGroup>
 

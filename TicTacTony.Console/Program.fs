@@ -1,7 +1,7 @@
 ﻿namespace TicTacTony.Console
 
 open Executor
-open TicTacTony.Core
+open TicTacTony.Core.Game
 
 
 module Program =
@@ -9,4 +9,4 @@ module Program =
     [<EntryPoint>]
     let main _ =
         let _ = printfn "Welcome to TicTacTony!!!"
-        in play <| Game.NewGame ()
+        in play NewGame

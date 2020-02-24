@@ -5,7 +5,7 @@ open TicTacTony.Core
 
 type Command =
     | New
-    | Play of Move * IPlayable
+    | Play of Position * IPlayable
     | PlayerAt of Position * IGame
     | IsDraw of IFull
     | WhoWon of IOver
@@ -15,8 +15,8 @@ type Command =
 module Commands =
 
     let toShortString = function
-        | Play (x, _) -> x |> Move.position |> string |> sprintf "M %-2s"
-        | PlayerAt (x, _) -> string x |> sprintf "P %-2s"
+        | Play (position, _) -> position |> string |> sprintf "M %-2s"
+        | PlayerAt (position, _) -> position |> string |> sprintf "P %-2s"
         | IsDraw _ -> "I"
         | WhoWon _ -> "W"
         | TakeBack _ -> "T"
@@ -24,8 +24,8 @@ module Commands =
         | Exit -> "E"
 
     let toDescription = function
-        | Play (x, _) -> string x |> sprintf "Move at position %s"
-        | PlayerAt (x, _) -> string x |> sprintf "Player at position %s"
+        | Play (x, _) -> x |> string |> sprintf "Move at position %s"
+        | PlayerAt (x, _) -> x |> string |> sprintf "Player at position %s"
         | IsDraw _ -> "Is the position a draw?"
         | WhoWon _ -> "Who won this game?"
         | TakeBack _ -> "Take back last move"

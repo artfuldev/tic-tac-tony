@@ -1,66 +1,87 @@
 ﻿namespace TicTacTony.Core
 
+open Board
+open Helpers
 
-type IGame = { Board: Board; PlayerAt: Position -> Player option }
 
-type IFull = { IsDraw: unit -> bool }
+type IGame = inherit IBoard abstract member PlayerAt: Position -> Player option
+type IHavePlayer = abstract member Player: Player
+and IUndoable = inherit IGame abstract member Undo: unit -> IPlayable
+and Move = internal Move of Position * (unit -> IUndoable)
+and IHaveMoves = abstract member Moves: Move seq
+and IMove = inherit IHaveMoves abstract member Move: Move -> IUndoable
+and IPlayable = inherit IGame inherit IMove inherit IHavePlayer
+type internal IPlaying = inherit IPlayable inherit IUndoable
+type IOver = inherit IUndoable abstract member WhoWon: unit -> Player option
+type IFull = inherit IOver abstract member IsDraw: unit -> bool
+type internal IWon = inherit IUndoable inherit IOver
+type internal IWinnable = inherit IPlaying
 
-type IOver = { WhoWon: unit -> Player option }
-  
-type IUndoable = { TakeBack: unit -> Game }
+type internal Won (x: Position, p: IWinnable) =
+    interface IWon with
+        member g.PlayerAt x = playerAt x g
+        member _.ToMap () = p |> play p.Player x
+        member _.Undo () = p :> IPlayable
+        member _.WhoWon () = p.Player |> Some
 
-and IPlayable = { Player: Player; Move: Move -> Game; Moves: Move seq }
+type internal Drawn (position: Position, previous: IPlayable) =
+    interface IOver with
+        member g.PlayerAt x = playerAt x g
+        member _.ToMap () = previous |> play previous.Player position
+        member _.Undo () = previous
+        member _.WhoWon () = None
+    interface IFull with member _.IsDraw () = true
 
-and Game =
-    | Fresh of IGame * IPlayable
-    | Played of IGame * IUndoable * IPlayable
-    | Won of IGame * IFull option * IOver * IUndoable
-    | Drawn of IGame * IFull * IOver * IUndoable
+type internal WonOnLastMove (x: Position, p: IWinnable) =
+    inherit Won (x, p)
+    interface IFull with member _.IsDraw () = false
+
+type internal Playing  (x: Position, p: IPlayable) =
+    abstract member _Move: Position -> (unit -> IUndoable)
+    interface IPlaying with
+        member g.PlayerAt x = playerAt x g
+        member _.Player = if p.Player = X then O else X
+        member _.ToMap () = p |> play p.Player x
+        member _.Undo () = p
+        member _.Move (Move (_, f)) = f ()
+        member g.Moves =
+            let move x = Move (x, g._Move x)
+            in positions |> Seq.where (free g) |> Seq.map move
+    default g._Move x = fun () ->
+        let played = positions |> Seq.where (not << free g) |> Seq.length
+        let u x = x :> IUndoable
+        in if played >= 3 then Winnable (x, g) |> u else Playing (x, g) |> u
+
+and internal Winnable (x: Position, p: IPlayable) =
+    inherit Playing (x, p)
+    interface IWinnable
+    override g._Move x = fun () -> 
+        let positions = seq [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
+        let played = positions |> Seq.where (not << free g) |> Seq.length
+        let win = isWin (g :> IHavePlayer).Player x g
+        let u x = x :> IUndoable 
+        in
+            if played = 8 then
+                if win then WonOnLastMove (x, g) |> u else Drawn (x, g) |> u
+            else
+                if win then Won (x, g) |> u else Winnable (x, g) |> u
+
+type internal New () =
+    interface IPlayable with
+        member g.PlayerAt x = playerAt x g
+        member _.ToMap () = Map.empty
+        member _.Player = X
+        member _.Move (Move (_, f)) = f ()
+        member g.Moves =
+            let move x = Move (x, fun () -> Playing (x, g) :> IUndoable)
+            in positions |> Seq.map move
 
 module Game =
-
-    open Board
-    open Helpers
     
-    let private game board =
-        { Board = board; PlayerAt = flip playerAt board; }
+    let NewGame = New () :> IPlayable
 
-    let private full board =
-        let isDraw _ = s (isFull >> (&&)) (not << isWon) board
-        in { IsDraw = isDraw }
+    let toString = toString
 
-    let private over board =
-        let whoWon _ = winner board
-        in { WhoWon = whoWon }
+    let positions = positions
 
-    let private move playable undoable board move =
-        let board = make move board
-        let game = game board
-        let full = full board
-        let undoable = undoable board
-        let over = over board
-        let playable = playable board
-        let isFull = isFull board
-        let full' = if isFull then Some full else None
-        let won = Won (game, full', over, undoable)
-        let drawn = Drawn (game, full, over, undoable)
-        let played = Played (game, undoable, playable)
-        in if isWon board then won else if isFull then drawn else played
-
-    let rec private undoable board =
-        let takeBack _ =
-            match undo board with
-            | Board [] -> NewGame
-            | board -> Played (game board, undoable board, playable board)
-        in { TakeBack = takeBack }
-  
-    and private playable board =
-        let player = player board
-        let moves = unoccupied board |> Seq.map (fun x -> Move(x, player))
-        in
-            { Player = player
-            ; Moves = moves
-            ; Move = move playable undoable board
-            }
-
-    and NewGame = Fresh (game (Board []), playable (Board []))
+    let position (Move (x, _)) = x

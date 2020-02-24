@@ -15,18 +15,16 @@ module Executor =
     let private handle (next: IGame -> int) (game: IGame) command =
         let _ = command |> Commands.toDescription |> printfn "%s"
         let print = printfn "%s" >> k game
-        let retry _ = print "Failed move. Try another command."
-        let g x = x :> IGame
         in
             match command with
             | Exit -> 0
             | New -> Game.NewGame |> next
-            | Play (x, p) -> move x p |> map g |> defaultWith retry |> next
-            | PlayerAt (x, g) -> playerAt x g |> player |> print |> next
-            | IsDraw f -> (if isDraw f then "Yes" else "No") |> print |> next
-            | WhoWon o -> o |> whoWon |> player |> print |> next
-            | TakeBack u -> u |> undo |> next
+            | Play (x, p) -> p.Move x |> next
+            | PlayerAt (x, g) -> g.PlayerAt x |> player |> print |> next
+            | IsDraw f -> (if f.IsDraw () then "Yes" else "No") |> print |> next
+            | WhoWon o -> o.WhoWon () |> player |> print |> next
+            | TakeBack u -> u.Undo () |> next
 
     let rec play (game: IGame) =
-        let _ = game |> toString |> printfn "\n%s" 
+        let _ = game |> toString |> printfn "\n%s"
         in s (handle play) read game

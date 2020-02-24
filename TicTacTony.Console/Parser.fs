@@ -16,16 +16,17 @@ module Parser =
             then [ for g in result.Groups -> g.Value ] |> List.tail |> Some
             else None
 
-    let position x = Game.positions |> Seq.tryFind (string >> ((=) x))
+    let pos x = Game.positions |> Seq.tryFind (string >> ((=) x))
 
     let parse (game: IGame) = function
         | Regex "^M (NW|N|NE|W|C|E|SW|S|SE)$" [x] ->
             match game with
             | :? IPlayable as p ->
-                x |> position |> filter (free p) |> map (fun x -> Play (x, p))
+                let move x = p.Moves |> Seq.tryFind (position >> (=) x)
+                in x |> pos |> map move |> flatten |> map (fun m -> Play (m, p))
             | _ -> None
         | Regex "^P (NW|N|NE|W|C|E|SW|S|SE)$" [x] ->
-            x |> position |> map (fun x -> PlayerAt (x, game))
+            x |> pos |> map (fun x -> PlayerAt (x, game))
         | Regex "^I$" _ ->
             match game with | :? IFull as f -> IsDraw f |> Some | _ -> None
         | Regex "^W$" _ ->

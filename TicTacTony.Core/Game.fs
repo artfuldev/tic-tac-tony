@@ -1,121 +1,146 @@
 ﻿namespace TicTacTony.Core
 
 open Board
+open Helpers
 
 type IGame = inherit IBoard
 type IHavePlayer = abstract member Player: Player
-and IUndoable = inherit IGame abstract member Previous: IPlayable
-and IAllowPlay = abstract member Play: Position -> IUndoable
+and IUndoable = inherit IGame abstract member Undo: unit -> IPlayable
+and IAllowPlay = abstract member Play: Map<Position, unit -> IUndoable>
 and IPlayable = inherit IGame inherit IAllowPlay inherit IHavePlayer
 type internal IPlaying = inherit IPlayable inherit IUndoable
-type IOver = inherit IUndoable abstract member Winner: Player option
-type IFull = inherit IOver abstract member Drawn: bool
+type IOver = inherit IUndoable abstract member WhoWon: unit -> Player option
+type IFull = inherit IOver abstract member IsDrawn: unit -> bool
 type internal IWon = inherit IUndoable inherit IOver
-type internal IAllowWin = abstract member Win: Position -> IWon
-type internal IWinnable = inherit IPlaying inherit IAllowWin
+type internal IWinnable = inherit IPlaying
 
 [<AbstractClass>]
-type Played internal (x: Position, p: IPlayable) =
-    interface IGame with member _.ToMap () = p |> play p.Player x
-    interface IUndoable with member _.Previous = p
-    interface IHavePlayer with member _.Player = if p.Player = X then O else X
+type internal Playable  (x: Position, p: IPlayable) =
+    abstract member _Play: Position -> IUndoable
+    abstract member _Moves: Map<Position, unit -> IUndoable>
+    interface IPlaying with
+        member _.Player = if p.Player = X then O else X
+        member _.ToMap () = p |> play p.Player x
+        member _.Undo () = p
+        member g.Play = g._Moves
+    default g._Moves =
+        let positions = seq [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
+        let isEmpty = flip unoccupied p
+        let collect map x = x |> g._Play |> k |> flip (Map.add x) map
+        in positions |> Seq.where isEmpty |> Seq.fold collect Map.empty
 
 [<AbstractClass>]
-type Won internal (x: Position, p: IWinnable) =
-    inherit Played(x, p)
-    interface IWon with member _.Winner = p.Player |> Some
+type internal Winnable  (x: Position, p: IPlayable) =
+    inherit Playable (x, p)
+    abstract member _Win: Position -> IWon
+    interface IWinnable
+    override g._Moves =
+        let positions = seq [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
+        let isEmpty = flip unoccupied p
+        let result x =
+            fun () ->
+                if isWin (g :> IHavePlayer).Player x p
+                then g._Win x :> IUndoable
+                else g._Play x
+        let collect map x = x |> result |> flip (Map.add x) map
+        in positions |> Seq.where isEmpty |> Seq.fold collect Map.empty
 
-type New internal () =
+[<AbstractClass>]
+type internal Won (x: Position, p: IWinnable) =
+    member _.Player = if p.Player = X then O else X
+    interface IWon with
+        member _.ToMap () = p |> play p.Player x
+        member _.Undo () = p :> IPlayable
+        member _.WhoWon () = p.Player |> Some
+
+type internal New () =
     interface IPlayable with
         member _.ToMap () = Map.empty
         member _.Player = X
-        member p.Play x = PlayedMove1Of9 (x, p) :> IUndoable
+        member p.Play =
+            let positions = seq [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
+            let isEmpty = flip unoccupied p
+            let collect map x =
+                PlayedMove1Of9 (x, p) :> IUndoable |> k |> flip (Map.add x) map
+            in positions |> Seq.where isEmpty |> Seq.fold collect Map.empty
 
-and PlayedMove1Of9 internal (x: Position, p: New) =
-    inherit Played (x, p)
-    interface IPlaying with
-        member p.Play x = PlayedMove2Of9 (x, p) :> IUndoable
+and internal PlayedMove1Of9 (position: Position, previous: New) =
+    inherit Playable (position, previous)
+    override game._Play position = PlayedMove2Of9 (position, game) :> IUndoable
 
-and PlayedMove2Of9 internal (x: Position, p: PlayedMove1Of9) =
-    inherit Played (x, p)
-    interface IPlaying with
-        member p.Play x = PlayedMove3Of9 (x, p) :> IUndoable
+and internal PlayedMove2Of9 (position: Position, previous: PlayedMove1Of9) =
+    inherit Playable (position, previous) with
+    override game._Play position = PlayedMove3Of9 (position, game) :> IUndoable
 
-and PlayedMove3Of9 internal (x: Position, p: PlayedMove2Of9) =
-    inherit Played (x, p)
-    interface IPlaying with
-        member p.Play x = PlayedMove4Of9 (x, p) :> IUndoable
+and internal PlayedMove3Of9 (position: Position, previous: PlayedMove2Of9) =
+    inherit Playable (position, previous) with
+    override game._Play position = PlayedMove4Of9 (position, game) :> IUndoable
 
-and PlayedMove4Of9 internal (x: Position, p: PlayedMove3Of9) =
-    inherit Played (x, p)
-    interface IWinnable with
-        member p.Play x = PlayedMove5Of9 (x, p) :> IUndoable
-        member p.Win x = WonOnMove5 (x, p) :> IWon
+and internal PlayedMove4Of9 (position: Position, previous: PlayedMove3Of9) =
+    inherit Winnable (position, previous) with
+    override game._Play position = PlayedMove5Of9 (position, game) :> IUndoable
+    override game._Win position = WonOnMove5 (position, game) :>  IWon
 
-and PlayedMove5Of9 internal (x: Position, p: PlayedMove4Of9) =
-    inherit Played (x, p)
-    interface IWinnable with
-        member p.Play x = PlayedMove6Of9 (x, p) :> IUndoable
-        member p.Win x = WonOnMove6 (x, p) :> IWon
+and internal PlayedMove5Of9 (position: Position, previous: PlayedMove4Of9) =
+    inherit Winnable (position, previous) with
+    override game._Play position = PlayedMove6Of9 (position, game) :> IUndoable
+    override game._Win position = WonOnMove6 (position, game) :> IWon
 
-and WonOnMove5 internal (x: Position, p: PlayedMove4Of9) =
+and internal WonOnMove5 (position: Position, previous: PlayedMove4Of9) =
+    inherit Won (position, previous)
+
+and internal PlayedMove6Of9 (position: Position, previous: PlayedMove5Of9) =
+    inherit Winnable (position, previous) with
+    override game._Play position = PlayedMove7Of9 (position, game) :> IUndoable
+    override game._Win position = WonOnMove7 (position, game) :> IWon
+
+and internal WonOnMove6 (position: Position, previous: PlayedMove5Of9) =
+    inherit Won (position, previous)
+
+and internal PlayedMove7Of9 (position: Position, previous: PlayedMove6Of9) =
+    inherit Winnable (position, previous) with
+    override game._Play position = PlayedMove8Of9 (position, game) :> IUndoable
+    override game._Win position = WonOnMove8 (position, game) :> IWon
+
+and internal WonOnMove7 (position: Position, previous: PlayedMove6Of9) =
+    inherit Won (position, previous)
+
+and internal PlayedMove8Of9 (position: Position, previous: PlayedMove7Of9) =
+    inherit Winnable (position, previous) with
+    override game._Play position = Drew (position, game) :> IUndoable
+    override game._Win position = WonOnLastMove (position, game) :> IWon
+
+and internal WonOnMove8 (position: Position, previous: PlayedMove7Of9) =
+    inherit Won (position, previous)
+
+and internal Drew (position: Position, previous: PlayedMove8Of9) =
+    member _.Player = (previous :> IPlayable).Player
+    interface IOver with
+        member g.ToMap () = previous |> play g.Player position
+        member _.Undo () = previous :> IPlayable
+        member _.WhoWon () = None
+    interface IFull with member _.IsDrawn () = true
+
+and internal WonOnLastMove (x: Position, p: PlayedMove8Of9) =
     inherit Won (x, p)
-
-and PlayedMove6Of9 internal (x: Position, p: PlayedMove5Of9) =
-    inherit Played (x, p)
-    interface IWinnable with
-        member p.Play x = PlayedMove7Of9 (x, p) :> IUndoable
-        member p.Win x = WonOnMove7 (x, p) :> IWon
-
-and WonOnMove6 internal (x: Position, p: PlayedMove5Of9) =
-    inherit Won (x, p)
-
-and PlayedMove7Of9 internal (x: Position, p: PlayedMove6Of9) =
-    inherit Played (x, p)
-    interface IWinnable with
-        member p.Play x = PlayedMove8Of9 (x, p) :> IUndoable
-        member p.Win x = WonOnMove8 (x, p) :> IWon
-
-and WonOnMove7 internal (x: Position, p: PlayedMove6Of9) =
-    inherit Won (x, p)
-
-and PlayedMove8Of9 internal (x: Position, p: PlayedMove7Of9) =
-    inherit Played (x, p)
-    interface IWinnable with
-        member p.Play x = Drew (x, p) :> IUndoable
-        member p.Win x = WonOnLastMove (x, p) :> IWon
-
-and WonOnMove8 internal (x: Position, p: PlayedMove7Of9) =
-    inherit Won (x, p)
-
-and Drew internal (x: Position, p: PlayedMove8Of9) =
-    inherit Played (x, p)
-    interface IOver with member _.Winner = None
-    interface IFull with member _.Drawn = true
-
-and WonOnLastMove internal (x: Position, p: PlayedMove8Of9) =
-    inherit Won (x, p)
-    interface IFull with member _.Drawn = false
+    interface IFull with member _.IsDrawn () = false
 
 module Game =
     
-    let NewGame = New ()
+    let NewGame = New () :> IPlayable
     
     let playerAt = playerAt
 
-    let move x : IPlayable -> IUndoable option = function
-        | :? IWinnable as w when unoccupied x w ->
-            Some (if isWin w.Player x w then w.Win x :> IUndoable else w.Play x)
-        | p when unoccupied x p -> Some (p.Play x)
-        | _ -> None
+    let move x (playable: IPlayable) = 
+        playable.Play |> Map.tryFind x |> Option.map ((|>) ())
 
-    let takeBack (undoable: IUndoable) =
-        undoable.Previous
+    let undo (undoable: IUndoable) =
+        undoable.Undo ()
 
     let whoWon (over: IOver) =
-        over.Winner
+        over.WhoWon ()
 
     let isDraw (full: IFull) =
-        full.Drawn
+        full.IsDrawn ()
 
     let toString = toString

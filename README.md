@@ -1,6 +1,16 @@
 # tic-tac-tony
 A simple tic tac toe program written in F# inspired by Tony Morris
 
+## The Problem
+
+Here's the [original problem](https://github.com/data61/fp-course/blob/master/projects/TicTacToe/TicTacToe.markdown)
+and the associated [blog post](https://blog.tmorris.net/posts/understanding-practical-api-design-static-typing-and-functional-programming/)
+
+## Variations
+
+* [Using discriminated unions and records of functions](https://github.com/artfuldev/tic-tac-tony/tree/0bc42cc590b0f2818ed36f1f951c7d6b875ee264)
+* [Using classes and interfaces](https://github.com/artfuldev/tic-tac-tony/tree/0b756f580fd36faf972ce6538d806fcbfb67921f)
+
 ## Getting Started
 
 ### With dotnet-core

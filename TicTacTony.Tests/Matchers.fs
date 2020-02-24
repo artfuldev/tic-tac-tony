@@ -4,7 +4,6 @@ open TicTacTony.Core
 open NHamcrest.Core
 open Option
 open Game
-open Helpers
 
 
 module Matchers =
@@ -15,8 +14,7 @@ module Matchers =
             fun (actual: obj) ->
                 match actual, expected with
                 | (:? IGame as game), (:? IGame as game') ->
-                    let players game = positions |> Seq.map (flip playerAt game)
-                    in players game' = players game
+                    toString game' = toString game
                 | (:? Option<Player> as player), (:? string as player') ->
                     player |> map string |> defaultValue "_" |> ((=) player')
                 | _ -> false

@@ -40,10 +40,11 @@ module internal Board =
 
     open System
     open Option
+    
+    let positions = seq [ NW; N; NE; W; C; E; SW; S; SE ]
 
     let toString (board: IBoard) =
         let playerAt = Helpers.flip playerAt board
-        let positions = [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
         let rows = positions |> Seq.chunkBySize 3 |> Seq.map (Seq.map playerAt)
         let row r = String.Join(" ", Seq.map (map string >> defaultValue "_") r)
         in String.Join ("\n", Seq.map row rows)

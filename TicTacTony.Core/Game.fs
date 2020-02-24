@@ -144,3 +144,5 @@ module Game =
         full.IsDrawn ()
 
     let toString = toString
+
+    let positions = seq [ NW; N; NE; W; C; E; SW; S; SE ]

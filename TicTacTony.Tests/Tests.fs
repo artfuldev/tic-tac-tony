@@ -14,8 +14,7 @@ module Tests =
     let private move (game: IGame) position =
         move position (game :?> IPlayable) |> Option.defaultWith fail :> IGame
 
-    let private position value =
-        [NW; N; NE; W; C; E; SW; S; SE] |> Seq.find (string >> ((=) value))
+    let private position value = positions |> Seq.find (string >> ((=) value))
 
     let private parse value =
         let xs (value: string) = value.Split " " |> Seq.filter ((<>) "")

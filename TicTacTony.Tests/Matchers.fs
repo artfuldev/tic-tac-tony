@@ -15,7 +15,6 @@ module Matchers =
             fun (actual: obj) ->
                 match actual, expected with
                 | (:? IGame as game), (:? IGame as game') ->
-                    let positions = seq [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
                     let players game = positions |> Seq.map (flip playerAt game)
                     in players game' = players game
                 | (:? Option<Player> as player), (:? string as player') ->

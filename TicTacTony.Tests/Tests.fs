@@ -11,8 +11,10 @@ module Tests =
     
     let private fail _ = failwith "impossible"
 
-    let private move (game: IGame) position =
-        move position (game :?> IPlayable) |> Option.defaultWith fail :> IGame
+    let private move (game: IGame) x =
+        let playable = game :?> IPlayable
+        let move = playable.Moves |> Seq.find (position >> (=) x)
+        in playable.Move move :> IGame
 
     let private position value = positions |> Seq.find (string >> ((=) value))
 
@@ -35,7 +37,7 @@ module Tests =
     let ``Once a move is played, it can be taken back``
         (moves: string) (previous: string) =
         match moves |> parse with
-        | :? IUndoable as u -> u |> undo |> should match' (previous |> parse)
+        | :? IUndoable as u -> u.Undo () |> should match' (previous |> parse)
         | _ -> fail ()
 
     [<Theory>]
@@ -45,7 +47,7 @@ module Tests =
     let ``In a completed game, the winner can be queried``
         (moves: string) (winner: string) =
         match moves |> parse with
-        | :? IOver as o -> o |> whoWon |> should match' winner
+        | :? IOver as o -> o.WhoWon () |> should match' winner
         | _ -> fail ()
 
     [<Theory>]
@@ -55,7 +57,7 @@ module Tests =
     [<InlineData ("", "SE", "_")>]
     let ``In any game, player at can be queried``
         (moves: string) (x: string) (player: string) =
-        moves |> parse |> playerAt (position x) |> should match' player
+        (moves |> parse).PlayerAt (position x) |> should match' player
 
     [<Theory>]
     [<InlineData ("NW C SE N S SW NE W E", false)>]
@@ -63,5 +65,5 @@ module Tests =
     let ``In a filled game, is draw can be queried``
         (moves: string) (drawn: bool) =
         match moves |> parse with
-        | :? IFull as f -> f |> isDraw |> should equal drawn
+        | :? IFull as f -> f.IsDraw () |> should equal drawn
         | _ -> fail ()

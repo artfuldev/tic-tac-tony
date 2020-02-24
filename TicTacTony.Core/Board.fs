@@ -9,7 +9,7 @@ module internal Board =
     let play player position (board: IBoard) =
         board.ToMap () |> Map.add position player
 
-    let unoccupied position (board: IBoard) =
+    let free (board: IBoard) position =
         board.ToMap () |> Map.containsKey position |> not
 
     let private _playerAt position map =

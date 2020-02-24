@@ -6,8 +6,8 @@ open Helpers
 type IGame = inherit IBoard
 type IHavePlayer = abstract member Player: Player
 and IUndoable = inherit IGame abstract member Undo: unit -> IPlayable
-and IAllowPlay = abstract member Play: Map<Position, unit -> IUndoable>
-and IPlayable = inherit IGame inherit IAllowPlay inherit IHavePlayer
+and IMove = abstract member Move: Position -> IUndoable option
+and IPlayable = inherit IGame inherit IMove inherit IHavePlayer
 type internal IPlaying = inherit IPlayable inherit IUndoable
 type IOver = inherit IUndoable abstract member WhoWon: unit -> Player option
 type IFull = inherit IOver abstract member IsDrawn: unit -> bool
@@ -37,50 +37,34 @@ type internal Playing  (x: Position, p: IPlayable) =
         member _.Player = if p.Player = X then O else X
         member _.ToMap () = p |> play p.Player x
         member _.Undo () = p
-        member g.Play =
-            let isEmpty = flip unoccupied g
-            let collect map x = x |> g._Move |> flip (Map.add x) map
-            in positions |> Seq.where isEmpty |> Seq.fold collect Map.empty    
-    default g._Move x =
-        fun () ->
-            let isEmpty = flip unoccupied g
-            let played = positions |> Seq.where (not << isEmpty) |> Seq.length
-            let winnable = played >= 3
-            in 
-                if winnable
-                then Winnable(x, g) :> IUndoable
-                else Playing (x, g) :> IUndoable
+        member g.Move x =
+            let f r x = x |> g._Move |> flip (Map.add x) r
+            let moves = positions |> Seq.where (free g) |> Seq.fold f Map.empty
+            in moves |> Map.tryFind x |> Option.map ((|>) ())
+    default g._Move x = fun () ->
+        let played = positions |> Seq.where (not << free g) |> Seq.length
+        let u x = x :> IUndoable
+        in if played >= 3 then Winnable (x, g) |> u else Playing (x, g) |> u
 
 and internal Winnable (x: Position, p: IPlayable) =
     inherit Playing (x, p)
     interface IWinnable
-    override g._Move x =
-        fun () -> 
-            let positions = seq [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
-            let isEmpty = flip unoccupied g
-            let played = positions |> Seq.where (not << isEmpty) |> Seq.length
-            let last = played = 8
-            let win = isWin (g :> IHavePlayer).Player x g
-            in
-                if last then
-                    if win
-                    then WonOnLastMove (x, g) :> IUndoable
-                    else Drawn (x, g) :> IUndoable
-                else
-                    if win
-                    then Won (x, g) :> IUndoable
-                    else Winnable (x, g) :> IUndoable
+    override g._Move x = fun () -> 
+        let positions = seq [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
+        let played = positions |> Seq.where (not << free g) |> Seq.length
+        let win = isWin (g :> IHavePlayer).Player x g
+        let u x = x :> IUndoable 
+        in
+            if played = 8 then
+                if win then WonOnLastMove (x, g) |> u else Drawn (x, g) |> u
+            else
+                if win then Won (x, g) |> u else Winnable (x, g) |> u
 
 type internal New () =
     interface IPlayable with
         member _.ToMap () = Map.empty
         member _.Player = X
-        member p.Play =
-            let positions = seq [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
-            let isEmpty = flip unoccupied p
-            let collect map x =
-                Playing (x, p) :> IUndoable |> k |> flip (Map.add x) map
-            in positions |> Seq.where isEmpty |> Seq.fold collect Map.empty
+        member g.Move x = Some (Playing (x, g) :> IUndoable)
 
 module Game =
     
@@ -88,18 +72,16 @@ module Game =
     
     let playerAt = playerAt
 
-    let move x (playable: IPlayable) = 
-        playable.Play |> Map.tryFind x |> Option.map ((|>) ())
+    let move x (playable: IPlayable) =  playable.Move x
 
-    let undo (undoable: IUndoable) =
-        undoable.Undo ()
+    let undo (undoable: IUndoable) = undoable.Undo ()
 
-    let whoWon (over: IOver) =
-        over.WhoWon ()
+    let whoWon (over: IOver) = over.WhoWon ()
 
-    let isDraw (full: IFull) =
-        full.IsDrawn ()
+    let isDraw (full: IFull) = full.IsDrawn ()
 
     let toString = toString
 
     let positions = positions
+
+    let free = free

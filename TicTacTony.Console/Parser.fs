@@ -4,6 +4,7 @@ open TicTacTony.Core
 open System.Text.RegularExpressions
 open Option
 open TicTacTony.Console
+open Game
 
 
 module Parser =
@@ -21,8 +22,7 @@ module Parser =
         | Regex "^M (NW|N|NE|W|C|E|SW|S|SE)$" [x] ->
             match game with
             | :? IPlayable as p ->
-                let free x = Game.playerAt x p = None
-                in  x |> position |> filter free |> map (fun x -> Play (x, p))
+                x |> position |> filter (free p) |> map (fun x -> Play (x, p))
             | _ -> None
         | Regex "^P (NW|N|NE|W|C|E|SW|S|SE)$" [x] ->
             x |> position |> map (fun x -> PlayerAt (x, game))

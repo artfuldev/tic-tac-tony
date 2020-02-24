@@ -33,6 +33,8 @@ module Tests =
         
     [<Theory>]
     [<InlineData ("NW N NE", "NW N")>]
+    [<InlineData ("NW N SE E C", "NW N SE E")>]
+    [<InlineData ("NW C SE N S SW NE E W", "NW C SE N S SW NE E")>]
     let ``Once a move is played, it can be taken back``
         (moves: string) (previous: string) =
         match moves |> parse with

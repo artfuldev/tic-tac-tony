@@ -2,7 +2,7 @@
 
 open Parser
 open System
-open TicTacTony.Core.Game
+open TicTacTony.Core.Board
 
 
 module Reader =

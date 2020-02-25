@@ -5,11 +5,11 @@ type IFull = private | Draw | NoDraw
 
 type IOver = private | ByWin of Player | ByDraw
 
-and IGame = private | New | Played of Position * IGame
+type IGame = private | New | Played of Position * IGame
 
 and IUndoable = private | Previous of IGame
 
-and IPlayable = private | Moves of Move list
+type IPlayable = private | Moves of Move list
 
 and Move = private | Move of Position * (unit -> Game)
 

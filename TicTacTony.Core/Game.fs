@@ -3,13 +3,13 @@
 
 type IFull = private | Draw | NoDraw
 
-type IOver = private | OverByWin of Player | OverByDraw
+type IOver = private | ByWin of Player | ByDraw
 
 and IGame = private | New | Played of Position * IGame
 
-and IUndoable = private | IUndoable of IGame
+and IUndoable = private | Previous of IGame
 
-and IPlayable = private | IPlayable of Move list
+and IPlayable = private | Moves of Move list
 
 and Move = private | Move of Position * (unit -> Game)
 
@@ -39,16 +39,16 @@ module Game =
     let private over game =
         let board = game |> board
         let over =
-            match board |> winner with | Some x -> OverByWin x | _ -> OverByDraw
+            match board |> winner with | Some x -> ByWin x | _ -> ByDraw
         in if not <| s (isFull >> (||)) isWon board then None else Some over                
     
     let private undoable = function
-        | New -> None | Played (_, g) -> IUndoable g |> Some
+        | New -> None | Played (_, g) -> Previous g |> Some
 
     let rec private playable game =
         if game |> over |> Option.isSome
         then None
-        else IPlayable (game |> _moves) |> Some
+        else Moves (game |> _moves) |> Some
 
     and private _moves game =
         let move pos = Move (pos, fun _ -> move pos game)
@@ -65,13 +65,13 @@ module Game =
 
     and NewGame = create New
 
-    let moves (IPlayable moves) = moves
+    let moves (Moves moves) = moves
 
     let make = function Move (_, f) -> f ()
 
-    let takeBack (IUndoable previous) = create previous
+    let takeBack (Previous previous) = create previous
 
-    let whoWon = function | OverByWin x -> Some x | OverByDraw -> None
+    let whoWon = function | ByWin x -> Some x | ByDraw -> None
 
     let isDraw = function | Draw -> true | NoDraw -> false
 

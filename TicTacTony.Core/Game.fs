@@ -30,7 +30,7 @@ module Game =
             match game with
             | New -> Map.empty | Played (x, g) -> make x (xOrO g) (board g)
 
-    let rec create game =
+    let rec private create game =
         let full =
             let full = if game |> board |> isWon then NoDraw else Draw
             in if game |> board |> Map.count |> (=) 9 then Some full else None

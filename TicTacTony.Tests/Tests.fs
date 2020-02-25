@@ -4,7 +4,6 @@ open FsUnit
 open Xunit
 
 open TicTacTony.Core
-open Board
 open Matchers
 open Game
 open Move

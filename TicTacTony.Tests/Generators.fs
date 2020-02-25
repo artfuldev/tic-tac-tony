@@ -2,31 +2,32 @@
 
 open FsCheck
 open TicTacTony.Core
+open Game
 
 
 module private Predicates =
 
-    let playable = function | Fresh _ | Played _ -> true | _ -> false
+    let playable = function | Game (_, Some _, _, _, _) -> true | _ -> false
     
-    let over = function | Won _ | Drawn _ -> true | _ -> false
+    let over = function | Game (_, _, _, Some _, _) -> true | _ -> false
     
-    let undoable = function | Fresh _ -> false | _ -> true
+    let undoable = function | Game (_, _, Some _, _, _) -> true | _ -> false
     
-    let full = function | Won (_, Some _, _, _) | Drawn _ -> true | _ -> false
+    let full = function | Game (_, _, _, _, Some _) -> true | _ -> false
 
-    let won = function | Won _ -> true | _ -> false
+    let won = function
+        | Game (_, _, _, Some o, _) -> whoWon o |> Option.isSome | _ -> false
 
-    let drawn = function | Drawn _ -> true | _ -> false
-
+    let drawn = function | Game (_, _, _, _, Some f) -> isDraw f | _ -> false
 
 module Generators =
     
     let private generator =
         let rec generate game =
             match game with
-            | Fresh (_, p) | Played (_, _, p) ->
-                game :: (p.Moves |> List.map p.Move |> List.collect generate)
-            | _ -> [game]
+            | Game (_, Some p, _, _, _) ->
+                game :: (p |> moves |> List.map make |> List.collect generate)
+            | _ -> [ game ]
         in generate Game.NewGame |> Gen.elements
 
     open Predicates

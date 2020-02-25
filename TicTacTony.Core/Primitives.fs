@@ -7,3 +7,9 @@ type Position =
     | SW |  S | SE
 
 type Player = X | O
+
+type Move = internal Move of Position * Player
+
+module Move =
+    
+    let position = function Move (position, _) -> position

@@ -1,71 +1,85 @@
 ﻿namespace TicTacTony.Core
 
-type IGame = { Board: Board; PlayerAt: Position -> Player option }
 
-type IFull = { IsDraw: unit -> bool }
+type IFull = private | Draw | NoDraw
 
-type IOver = { WhoWon: unit -> Player option }
-  
-type IUndoable = { TakeBack: unit -> Game }
+type IOver = private | OverByWin of Player | OverByDraw
 
-and IPlayable = { Player: Player; Move: Move -> Game; Moves: Move list }
+and IGame = private | New | Played of Position * IGame
+
+and IUndoable = private | IUndoable of IGame
+
+and IPlayable = private | IPlayable of Move list
+
+and Move = private | Move of Position * Player * (unit -> Game)
 
 and Game =
-    | Fresh of IGame * IPlayable
-    | Played of IGame * IUndoable * IPlayable
-    | Won of IGame * IFull option * IOver * IUndoable
-    | Drawn of IGame * IFull * IOver * IUndoable
+    | Game of IGame * IPlayable option * IUndoable option * IOver option * IFull option
 
 module Game =
 
     open Board
     open Helpers
-    
-    let private game board =
-        { Board = board; PlayerAt = flip playerAt board; }
 
-    let private full board =
-        let isDraw _ = s (isFull >> (&&)) (not << isWon) board
-        in { IsDraw = isDraw }
+    let private other = function | X -> O | O -> X
 
-    let private over board =
-        let whoWon _ = winner board
-        in { WhoWon = whoWon }
+    let rec private player = function
+        | New -> X | Played (_, g) -> g |> player |> other
 
-    let private move playable undoable board move =
-        let board = make move board
-        let game = game board
-        let full = full board
-        let undoable = undoable board
-        let over = over board
-        let playable = playable board
-        let isFull = isFull board
-        let full' = if isFull then Some full else None
-        let won = Won (game, full', over, undoable)
-        let drawn = Drawn (game, full, over, undoable)
-        let played = Played (game, undoable, playable)
-        in if isWon board then won else if isFull then drawn else played
+    let rec private board = function
+        | New -> Map.empty | Played (x, g) -> Board.make x (player g) (board g)
 
-    let rec private undoable board =
-        let takeBack _ =
-            match undo board with
-            | Board [] -> NewGame
-            | board -> Played (game board, undoable board, playable board)
-        in { TakeBack = takeBack }
-  
-    and private playable board =
-        let player = player board
-        let moves = unoccupied board |> List.map (fun x -> Move(x, player))
+    let private full game =
+        let board = game |> board
         in
-            { Player = player
-            ; Moves = moves
-            ; Move = move playable undoable board
-            }
+            if (not << isFull) board
+            then None
+            else if (not << isWon) board then Some Draw else Some NoDraw
+    
+    let private over game =
+        let board = game |> board
+        let over =
+            match board |> winner with | Some x -> OverByWin x | _ -> OverByDraw
+        in if not <| s (isFull >> (||)) isWon board then None else Some over                
+    
+    let private undoable = function
+        | New -> None | Played (_, g) -> IUndoable g |> Some
 
-    and NewGame = Fresh (game (Board []), playable (Board []))
+    let rec private playable game =
+        if game |> over |> Option.isSome
+        then None
+        else IPlayable (game |> _moves) |> Some
 
-    let toString = function
-        | Fresh (g, _) | Played (g, _, _) | Won (g, _, _ , _)
-        | Drawn (g, _, _, _) -> Board.toString g.Board
+    and private _moves game =
+        let player = game |> player
+        let move pos = Move (pos, player, fun _ -> move pos game)
+        in game |> board |> unoccupied |> List.map move
+
+    and private create game =
+        let undoable = undoable game
+        let full = full game
+        let over = over game
+        let playable = playable game
+        in Game (game, playable, undoable, over, full)
+    
+    and private move position game = Played (position, game) |> create        
+
+    and NewGame = create New
+
+    let moves (IPlayable moves) = moves
+
+    let make = function Move (_, _, f) -> f ()
+
+    let takeBack (IUndoable previous) = create previous
+
+    let whoWon = function | OverByWin x -> Some x | OverByDraw -> None
+
+    let isDraw = function | Draw -> true | NoDraw -> false
+
+    let playerAt = function Game (g, _, _, _, _) -> g |> board |> flip playerAt
+
+    let toString = function Game (g, _, _, _, _) -> g |> board |> toString
 
     let positions = positions
+    
+    let position = function Move (position, _, _) -> position

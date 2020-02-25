@@ -4,17 +4,15 @@ open System
 open Helpers
 open Option
 
-
-type Board = internal Board of Move list
+type Board = Map<Position, Player>
 
 module internal Board =
 
-    let rec playerAt x = function
-        | Board (Move (y, p)::_) when x = y -> Some p
-        | Board (_::ms) -> playerAt x (Board ms)
-        | _ -> None
+    let rec playerAt x (b: Board) = Map.tryFind x b
+    
+    let make x p (b: Board) = Map.add x p b
 
-    let winner board =
+    let winner b =
         let winner = function
             | [ Some a; Some b; Some c ] ->
                 if (a = b && b = c) then Some a else None
@@ -24,31 +22,17 @@ module internal Board =
             ; [ NW;  W; SW ]; [  N;  C;  S ]; [ NE;  E; SE ]
             ; [ NW;  C; SE ]; [ NE;  C; SW ]
             ]
-            |> Seq.map ((List.map (flip playerAt board)) >> winner)
+            |> Seq.map ((List.map (flip playerAt b)) >> winner)
             |> Seq.choose id
             |> Seq.tryHead
-    
-    let player = function
-        | Board ms -> if List.length ms % 2 <> 1 then X else O
 
-    let isFull = function
-        | Board ms -> List.length ms = 9
+    let isFull b = Map.count b = 9
 
-    let isWon =
-        winner >> isSome
+    let isWon = winner >> isSome
     
     let positions = [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
 
-    let unoccupied = function
-        | Board ms ->
-            let occupied = flip List.contains (ms |> List.map Move.position)
-            in positions |> List.filter (not << occupied)
-
-    let make m = function
-        | Board ms -> Board (m::ms)
-
-    let undo = function
-        | Board [] -> failwith "impossible" | Board (_::ms) -> Board ms
+    let unoccupied b = positions |> List.filter (not << flip Map.containsKey b)
 
     let toString board =
         let player = flip playerAt board

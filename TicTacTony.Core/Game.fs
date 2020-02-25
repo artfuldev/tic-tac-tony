@@ -64,3 +64,9 @@ module Game =
             }
 
     and NewGame = Fresh (game (Board []), playable (Board []))
+
+    let toString = function
+        | Fresh (g, _) | Played (g, _, _) | Won (g, _, _ , _)
+        | Drawn (g, _, _, _) -> Board.toString g.Board
+
+    let positions = positions

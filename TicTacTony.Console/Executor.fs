@@ -4,25 +4,24 @@ open TicTacTony.Core
 open TicTacTony.Console
 open Reader
 open Helpers
+open Game
 
 
 module Executor =
 
     let private player = Option.map string >> Option.defaultValue "Nobody"
 
-    let private handle next game command =
-        let _ = command |> Commands.toDescription |> printfn "%s"
-        let print = printfn "%s" >> k game
-        in
-            match command with
-            | Exit -> 0
-            | New -> Game.NewGame |> next
-            | Play (m, p) -> p.Move m |> next
-            | PlayerAt (x, g) -> g.PlayerAt x |> player |> print |> next
-            | IsDraw f -> (if f.IsDraw() then "Yes" else "No") |> print |> next
-            | WhoWon o -> o.WhoWon() |> player |> print |> next
-            | TakeBack u -> u.TakeBack () |> next
+    let private print game = printfn "%s" >> k game
+
+    let private handle next game cmd =
+        match cmd |> Commands.toDescription |> printfn "%s" |> k cmd with
+        | Exit -> 0
+        | New -> NewGame |> next
+        | Play move -> move |> make |> next
+        | PlayerAt (x, g) -> x |> playerAt g |> player |> print game |> next
+        | IsDraw f -> (if isDraw f then "Yes" else "No") |> print game |> next
+        | WhoWon o -> o |> whoWon |> player |> print game |> next
+        | TakeBack u -> u |> takeBack |> next
 
     let rec play game =
-        let game' = game |> Game.toString |> printfn "\n%s" |> k game
-        in s (handle play) read game'
+        s (handle play) (toString >> print game >> read) game

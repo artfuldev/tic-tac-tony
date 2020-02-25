@@ -24,8 +24,5 @@ module Executor =
             | TakeBack u -> u.TakeBack () |> next
 
     let rec play game =
-        match game with
-        | Fresh (g, _) | Played (g, _, _) | Won (g, _, _, _)
-        | Drawn (g, _, _, _) ->
-            let _ = g.Board |> Board.toString |> printfn "\n%s"
-            in s (handle play) read game
+        let game' = game |> Game.toString |> printfn "\n%s" |> k game
+        in s (handle play) read game'

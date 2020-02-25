@@ -3,7 +3,7 @@
 open TicTacTony.Core
 open System.Text.RegularExpressions
 open Option
-open TicTacTony.Core.Board
+open Game
 open TicTacTony.Console
 open Move
 

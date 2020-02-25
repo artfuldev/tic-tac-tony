@@ -32,8 +32,11 @@ module Tests =
         | _ -> fail ()
 
     [<Property (Arbitrary = [| typeof<Won> |])>]
-    let ``In a won game, whoWon returns some winner`` = function
-        | Game (_, _, _, Some o, _) -> o |> whoWon <> None
+    let ``In a won game, whoWon returns the previous player as winner`` = function
+        | Game (_, _, Some u, Some o, _) ->
+            match u |> takeBack with
+            | Game (_, Some p, _, _, _) -> whoWon o = Some (p |> player)
+            | _ -> fail ()
         | _ -> fail ()
 
     [<Property (Arbitrary = [| typeof<Drawn> |])>]

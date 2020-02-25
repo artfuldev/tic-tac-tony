@@ -32,9 +32,8 @@ module Game =
         | New -> Map.empty | Played (x, g) -> make x (player g) (board g)
 
     let private full game =
-        if game |> board |> Map.count |> (>) 9
-        then None
-        else (if game |> board |> isWon then NoDraw else Draw) |> Some
+        let full = if game |> board |> isWon then NoDraw else Draw
+        in if game |> board |> Map.count |> (=) 9 then Some full else None
     
     let private over game =
         let board = game |> board

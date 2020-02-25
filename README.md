@@ -8,10 +8,10 @@ and the associated [blog post](https://blog.tmorris.net/posts/understanding-prac
 
 ## Variations
 
-* [Using discriminated unions and records of functions](https://github.com/artfuldev/tic-tac-tony/tree/0bc42cc590b0f2818ed36f1f951c7d6b875ee264)
+* [Using discriminated unions and records of functions](https://github.com/artfuldev/tic-tac-tony)
 * [Using classes and interfaces](https://github.com/artfuldev/tic-tac-tony/tree/0b756f580fd36faf972ce6538d806fcbfb67921f)
 
-## Getting Started
+## Running the application
 
 ### With dotnet-core
 

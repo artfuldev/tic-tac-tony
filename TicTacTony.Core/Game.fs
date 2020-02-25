@@ -14,7 +14,9 @@ and IPlayable = private | Moves of Move list
 and Move = private | Move of Position * (unit -> Game)
 
 and Game =
-    | Game of IGame * IPlayable option * IUndoable option * IOver option * IFull option
+    | Game of
+        IGame *
+        IPlayable option * IUndoable option * IOver option * IFull option
 
 module Game =
 

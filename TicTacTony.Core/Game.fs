@@ -11,7 +11,7 @@ and IUndoable = private | IUndoable of IGame
 
 and IPlayable = private | IPlayable of Move list
 
-and Move = private | Move of Position * Player * (unit -> Game)
+and Move = private | Move of Position * (unit -> Game)
 
 and Game =
     | Game of IGame * IPlayable option * IUndoable option * IOver option * IFull option
@@ -51,8 +51,7 @@ module Game =
         else IPlayable (game |> _moves) |> Some
 
     and private _moves game =
-        let player = game |> player
-        let move pos = Move (pos, player, fun _ -> move pos game)
+        let move pos = Move (pos, fun _ -> move pos game)
         in game |> board |> unoccupied |> List.map move
 
     and private create game =
@@ -68,7 +67,7 @@ module Game =
 
     let moves (IPlayable moves) = moves
 
-    let make = function Move (_, _, f) -> f ()
+    let make = function Move (_, f) -> f ()
 
     let takeBack (IUndoable previous) = create previous
 
@@ -82,4 +81,4 @@ module Game =
 
     let positions = positions
     
-    let position = function Move (position, _, _) -> position
+    let position = function Move (x, _) -> x

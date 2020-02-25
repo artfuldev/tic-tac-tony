@@ -14,14 +14,19 @@ This is the preferred approach. It is very clean, and demonstrates a functional
 approach to the problem while showcasing composition-over-inheritance
 philosophies and why it is important. It represents the domain closely without
 relying on dependent typing. In addition, only valid moves are available to be
-played - as moves cannot be constructed. However, it is possible to get a valid
-move from one game and pass it to another, we can further fine tune it.
+played - as moves cannot be constructed externally. Also, it is impossible to
+make an invalid move because moves are attached to a particular game and result
+on creation and is immutable. Making a move always results in the same new state.
 
 ### [Using classes and interfaces](https://github.com/artfuldev/tic-tac-tony/tree/0b756f580fd36faf972ce6538d806fcbfb67921f)
 
 This is the OO approach. The approach is leaky due to interfaces being public,
 and now implementations of those interfaces can be external and thereby not
 bound to the expected behaviour.
+
+## Tests
+
+There are both property-based tests and theories.
 
 ## Running the application
 

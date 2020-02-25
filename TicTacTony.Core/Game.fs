@@ -29,28 +29,23 @@ module Game =
         | New -> X | Played (_, g) -> g |> player |> other
 
     let rec private board = function
-        | New -> Map.empty | Played (x, g) -> Board.make x (player g) (board g)
+        | New -> Map.empty | Played (x, g) -> make x (player g) (board g)
 
     let private full game =
-        let board = game |> board
-        in
-            if (not << isFull) board
-            then None
-            else if (not << isWon) board then Some Draw else Some NoDraw
+        if game |> board |> Map.count |> (>) 9
+        then None
+        else (if game |> board |> isWon then NoDraw else Draw) |> Some
     
     let private over game =
         let board = game |> board
-        let over =
-            match board |> winner with | Some x -> ByWin x | _ -> ByDraw
-        in if not <| s (isFull >> (||)) isWon board then None else Some over                
+        let over = match board |> winner with | Some x -> ByWin x | _ -> ByDraw
+        in if board |> isWon || game |> full <> None then Some over else None
     
     let private undoable = function
         | New -> None | Played (_, g) -> Previous g |> Some
 
     let rec private playable game =
-        if game |> over |> Option.isSome
-        then None
-        else Moves (game |> _moves) |> Some
+        if game |> over <> None then None else Moves (game |> _moves) |> Some
 
     and private _moves game =
         let move pos = Move (pos, fun _ -> move pos game)

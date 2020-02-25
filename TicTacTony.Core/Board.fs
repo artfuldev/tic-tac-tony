@@ -26,8 +26,6 @@ module internal Board =
             |> Seq.choose id
             |> Seq.tryHead
 
-    let isFull b = Map.count b = 9
-
     let isWon = winner >> isSome
     
     let positions = [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]

@@ -23,43 +23,31 @@ module Game =
     open Board
     open Helpers
 
-    let private other = function | X -> O | O -> X
+    let rec private board game =
+        let other = function | X -> O | O -> X
+        let rec xOrO = function | New -> X | Played (_, g) -> g |> xOrO |> other
+        in
+            match game with
+            | New -> Map.empty | Played (x, g) -> make x (xOrO g) (board g)
 
-    let rec private player = function
-        | New -> X | Played (_, g) -> g |> player |> other
-
-    let rec private board = function
-        | New -> Map.empty | Played (x, g) -> make x (player g) (board g)
-
-    let private full game =
-        let full = if game |> board |> isWon then NoDraw else Draw
-        in if game |> board |> Map.count |> (=) 9 then Some full else None
-    
-    let private over game =
-        let board = game |> board
-        let over = match board |> winner with | Some x -> ByWin x | _ -> ByDraw
-        in if board |> isWon || game |> full <> None then Some over else None
-    
-    let private undoable = function
-        | New -> None | Played (_, g) -> Previous g |> Some
-
-    let rec private playable game =
-        if game |> over <> None then None else Moves (game |> _moves) |> Some
-
-    and private _moves game =
-        let move pos = Move (pos, fun _ -> move pos game)
-        in game |> board |> unoccupied |> List.map move
-
-    and private create game =
-        let undoable = undoable game
-        let full = full game
-        let over = over game
-        let playable = playable game
+    let rec create game =
+        let full =
+            let full = if game |> board |> isWon then NoDraw else Draw
+            in if game |> board |> Map.count |> (=) 9 then Some full else None
+        let over =
+            let b = game |> board
+            let over = match b |> winner with | Some x -> ByWin x | _ -> ByDraw
+            in if b |> isWon || full <> None then Some over else None
+        let playable =
+            let moves game =
+                let move pos = Move (pos, Played (pos, game) |> create |> k)
+                in game |> board |> unoccupied |> List.map move
+            if over <> None then None else Moves (game |> moves) |> Some
+        let undoable =
+            match game with | New -> None | Played (_, g) -> Previous g |> Some
         in Game (game, playable, undoable, over, full)
-    
-    and private move position game = Played (position, game) |> create        
 
-    and NewGame = create New
+    let NewGame = create New
 
     let moves (Moves moves) = moves
 

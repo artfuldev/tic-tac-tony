@@ -2,11 +2,13 @@
 
 open FsUnit
 open Xunit
+open FsCheck.Xunit
 
 open TicTacTony.Core
 open Matchers
 open Game
 open Move
+open Generators
 
 module Tests =
     
@@ -22,34 +24,55 @@ module Tests =
         let xs (value: string) = value.Split " " |> Seq.filter ((<>) "")
         in value |> xs |> Seq.map position |> Seq.fold move NewGame
 
-    [<Theory>]
-    [<InlineData ("NW N", "NE", "NW N NE")>]
-    [<InlineData ("", "NW", "NW")>]
-    let ``In a playable game, a valid move can be made to get a resulting game``
-        (moves: string) (x: string) (result: string) =
-        let expected = result |> parse
-        in x |> position |> move (moves |> parse) |> should match' expected
-        
-    [<Theory>]
-    [<InlineData ("NW N NE", "NW N")>]
-    [<InlineData ("NW N SE E C", "NW N SE E")>]
-    [<InlineData ("NW C SE N S SW NE E W", "NW C SE N S SW NE E")>]
-    let ``Once a move is played, it can be taken back``
-        (moves: string) (previous: string) =
-        match moves |> parse with
-        | Played (_, u, _) | Won (_, _, _, u) | Drawn (_, _, _, u) ->
-            u.TakeBack () |> should match' (previous |> parse)
+    [<Property (Arbitrary = [| typeof<Playable> |])>]
+    let ``In a playable game, a move returns a new value of game``
+        (game: Game) =
+        match game with
+        | Fresh (_, p) | Played (_, _, p) ->
+            p.Moves |> Seq.forall (p.Move >> (not << (==) game)) 
+        | _ -> fail ()
+
+    [<Property (Arbitrary = [| typeof<Won> |])>]
+    let ``In a won game, whoWon returns some winner``
+        (game: Game) =
+        match game with
+        | Won (_, _, o, _) -> o.WhoWon () <> None
+        | _ -> fail ()
+
+    [<Property (Arbitrary = [| typeof<Drawn> |])>]
+    let ``In a drawn game, whoWon returns none``
+        (game: Game) =
+        match game with
+        | Drawn (_, _, o, _) -> o.WhoWon () = None
+        | _ -> fail ()
+
+    [<Property (Arbitrary = [| typeof<Full> |])>]
+    let ``In a full game, isDraw returns whether the game is drawn``
+        (game: Game) =
+        match game with
+        | Won (_, Some f, _, _) -> f.IsDraw () = false
+        | Drawn (_, f, _, _) -> f.IsDraw () = true
+        | _ -> fail ()
+
+    [<Property (Arbitrary = [| typeof<Playable> |])>]
+    let ``In a playable game, undoing a move on the game returns the same game``
+        (game: Game) =
+        match game with
+        | Fresh (_, p) | Played (_, _, p) ->
+            let undo = function
+                | Played (_, u, _) | Won (_, _, _, u) | Drawn (_, _, _, u) ->
+                    u.TakeBack ()
+                | _ -> fail ()
+            in p.Moves |> Seq.forall (p.Move >> undo >> (==) game)
         | _ -> fail ()
 
     [<Theory>]
     [<InlineData ("NW N SE E C", "X")>]
     [<InlineData ("NW N SE C SW S", "O")>]
-    [<InlineData ("NW C SE N S SW NE E W", "_")>]
-    let ``In a completed game, the winner can be queried``
+    let ``In a won game, the winner can be queried``
         (moves: string) (winner: string) =
         match moves |> parse with
-        | Won (_, _, o, _) | Drawn (_, _, o, _) ->
-            o.WhoWon () |> should match' winner
+        | Won (_, _, o, _) -> o.WhoWon () |> should match' winner
         | _ -> fail ()
 
     [<Theory>]
@@ -63,13 +86,3 @@ module Tests =
         | Fresh (g, _) | Played (g, _, _) | Won (g, _, _, _)
         | Drawn (g, _, _, _) ->
             x |> position |> g.PlayerAt |> should match' player
-
-    [<Theory>]
-    [<InlineData ("NW C SE N S SW NE W E", false)>]
-    [<InlineData ("NW C SE N S SW NE E W", true)>]
-    let ``In a filled game, is draw can be queried``
-        (moves: string) (drawn: bool) =
-        match moves |> parse with
-        | Won (_, Some f, _, _) | Drawn (_, f, _, _) ->
-            f.IsDraw () |> should equal drawn
-        | _ -> fail ()

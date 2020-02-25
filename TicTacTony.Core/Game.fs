@@ -1,6 +1,5 @@
 ﻿namespace TicTacTony.Core
 
-
 type IGame = { Board: Board; PlayerAt: Position -> Player option }
 
 type IFull = { IsDraw: unit -> bool }
@@ -9,7 +8,7 @@ type IOver = { WhoWon: unit -> Player option }
   
 type IUndoable = { TakeBack: unit -> Game }
 
-and IPlayable = { Player: Player; Move: Move -> Game; Moves: Move seq }
+and IPlayable = { Player: Player; Move: Move -> Game; Moves: Move list }
 
 and Game =
     | Fresh of IGame * IPlayable
@@ -56,7 +55,7 @@ module Game =
   
     and private playable board =
         let player = player board
-        let moves = unoccupied board |> Seq.map (fun x -> Move(x, player))
+        let moves = unoccupied board |> List.map (fun x -> Move(x, player))
         in
             { Player = player
             ; Moves = moves

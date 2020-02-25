@@ -37,12 +37,12 @@ module internal Board =
     let isWon =
         winner >> isSome
     
-    let positions = seq [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
+    let positions = [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
 
     let unoccupied = function
         | Board ms ->
-            let occupied = flip Seq.contains (ms |> List.map Move.position)
-            in positions |> Seq.filter (not << occupied)
+            let occupied = flip List.contains (ms |> List.map Move.position)
+            in positions |> List.filter (not << occupied)
 
     let make m = function
         | Board ms -> Board (m::ms)

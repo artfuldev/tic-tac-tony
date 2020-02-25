@@ -33,23 +33,17 @@ module Tests =
         | _ -> fail ()
 
     [<Property (Arbitrary = [| typeof<Won> |])>]
-    let ``In a won game, whoWon returns some winner``
-        (game: Game) =
-        match game with
+    let ``In a won game, whoWon returns some winner`` = function
         | Won (_, _, o, _) -> o.WhoWon () <> None
         | _ -> fail ()
 
     [<Property (Arbitrary = [| typeof<Drawn> |])>]
-    let ``In a drawn game, whoWon returns none``
-        (game: Game) =
-        match game with
+    let ``In a drawn game, whoWon returns none`` = function
         | Drawn (_, _, o, _) -> o.WhoWon () = None
         | _ -> fail ()
 
     [<Property (Arbitrary = [| typeof<Full> |])>]
-    let ``In a full game, isDraw returns whether the game is drawn``
-        (game: Game) =
-        match game with
+    let ``In a full game, isDraw returns whether the game is drawn`` = function
         | Won (_, Some f, _, _) -> f.IsDraw () = false
         | Drawn (_, f, _, _) -> f.IsDraw () = true
         | _ -> fail ()

@@ -8,7 +8,7 @@ and the associated [blog post](https://blog.tmorris.net/posts/understanding-prac
 
 ## Approaches
 
-## 1. [Using discriminated unions, and record of functions](https://github.com/artfuldev/tic-tac-tony/tree/0bc42cc590b0f2818ed36f1f951c7d6b875ee264)
+### 1. [Using discriminated unions, and record of functions](https://github.com/artfuldev/tic-tac-tony/tree/0bc42cc590b0f2818ed36f1f951c7d6b875ee264)
 
 This is the first approach. It is very clean, and demonstrates a functional
 approach to the problem while showcasing composition-over-inheritance

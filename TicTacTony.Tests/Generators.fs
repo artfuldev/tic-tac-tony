@@ -6,27 +6,30 @@ open Game
 
 
 module private Predicates =
-
-    let playable = function | Game (_, Some _, _, _, _) -> true | _ -> false
     
-    let over = function | Game (_, _, _, Some _, _) -> true | _ -> false
-    
-    let undoable = function | Game (_, _, Some _, _, _) -> true | _ -> false
-    
-    let full = function | Game (_, _, _, _, Some _) -> true | _ -> false
+    type Predicate = IGame -> bool
 
-    let won = function
-        | Game (_, _, _, Some o, _) -> whoWon o |> Option.isSome | _ -> false
+    let playable : Predicate = function | :? IPlayable -> true | _ -> false
+    
+    let over : Predicate = function | :? IOver -> true | _ -> false
+    
+    let undoable : Predicate = function | :? IUndoable -> true | _ -> false
+    
+    let full : Predicate = function | :? IFull -> true | _ -> false
 
-    let drawn = function | Game (_, _, _, _, Some f) -> isDraw f | _ -> false
+    let won : Predicate = function
+        | :? IOver as o -> whoWon o |> Option.isSome | _ -> false
+
+    let drawn : Predicate = function | :? IFull as f -> isDraw f | _ -> false
 
 module Generators =
     
     let private generator =
-        let rec generate game =
+        let rec generate (game: IGame) =
             match game with
-            | Game (_, Some p, _, _, _) ->
-                game :: (p |> moves |> List.map make |> List.collect generate)
+            | :? IPlayable as p ->
+                let moves = p |> moves
+                in  game :: (moves |> List.map make |> List.collect generate)
             | _ -> [ game ]
         in generate Game.NewGame |> Gen.elements
 

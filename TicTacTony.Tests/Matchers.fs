@@ -7,9 +7,6 @@ open Option
 
 module Matchers =
 
-    let ( == ) game game' =
-        Game.toString game = Game.toString game'
-
     let match' (expected: obj) =
         CustomMatcher (
             sprintf "match %O" expected,

@@ -13,22 +13,53 @@ module Tests =
     
     let private fail _ = failwith "impossible"
 
+    let private same game game' = toString game = toString game'
+
     let private move game =
         let f p x = p |> moves |> List.find (position >> ((=) x)) |> make
         in match game with | Game (_, Some p, _, _, _) -> f p | _ -> fail
 
-    let private position value = positions |> Seq.find (string >> ((=) value))
+    let private toPosition value = positions |> Seq.find (string >> ((=) value))
 
     let private parse value =
         let xs (value: string) = value.Split " " |> Seq.filter ((<>) "")
-        in value |> xs |> Seq.map position |> Seq.fold move NewGame
+        in value |> xs |> Seq.map toPosition |> Seq.fold move NewGame
+
+    [<Property (Arbitrary = [| typeof<Playable> |])>]
+    let ``In a playable game, a move played is no longer available``
+        (game: Game) =
+        let same move move' = position move = position move'
+        in
+            match game with
+            | Game (_, Some p, _, _, _) ->
+                let test move =
+                    match make move with
+                    | Game (_, Some p, _, _, _) ->
+                        p |> moves |> Seq.forall (not << same move)
+                    | Game (_, None, _, _, _) -> true = true
+                in p |> moves |> Seq.forall test
+            | _ -> fail ()
+
+    [<Property (Arbitrary = [| typeof<Playable> |])>]
+    let ``In a playable game, the number of available moves reduces at each move``
+        (game: Game) =
+        let count p = p |> moves |> List.length
+        in
+            match game with
+            | Game (_, Some p, _, _, _) ->
+                let test move =
+                    match make move with
+                    | Game (_, Some p', _, _, _) -> count p >= count p'
+                    | Game (_, None, _, _, _) -> true = true
+                in p |> moves |> Seq.forall test
+            | _ -> fail ()
 
     [<Property (Arbitrary = [| typeof<Playable> |])>]
     let ``In a playable game, a move returns a new value of game``
         (game: Game) =
         match game with
         | Game (_, Some p, _, _, _) ->
-            p |> moves |> Seq.forall (make >> (not << (==) game)) 
+            p |> moves |> Seq.forall (make >> (not << same game)) 
         | _ -> fail ()
 
     [<Property (Arbitrary = [| typeof<Won> |])>]
@@ -58,7 +89,7 @@ module Tests =
         | Game (_, Some p, _, _, _) ->
             let undo = function
                 | Game (_, _, Some u, _, _) -> takeBack u | _ -> fail ()
-            in p |> moves |> Seq.forall (make >> undo >> (==) game)
+            in p |> moves |> Seq.forall (make >> undo >> same game)
         | _ -> fail ()
 
     [<Theory>]
@@ -77,4 +108,4 @@ module Tests =
     [<InlineData ("", "SE", "_")>]
     let ``In any game, player at can be queried``
         (moves: string) (x: string) (player: string) =
-        x |> position |> playerAt (moves |> parse) |> should match' player
+        x |> toPosition |> playerAt (moves |> parse) |> should match' player

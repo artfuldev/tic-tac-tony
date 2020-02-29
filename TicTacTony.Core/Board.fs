@@ -27,13 +27,11 @@ module internal Board =
             |> Seq.tryHead
 
     let isWon = winner >> isSome
-    
-    let positions = [ NW;  N; NE;  W;  C;  E; SW;  S; SE ]
 
-    let unoccupied b = positions |> List.filter (not << flip Map.containsKey b)
+    let free (b: Board) position = b |> Map.containsKey position |> not
 
     let toString board =
         let player = flip playerAt board
-        let rows = positions |> Seq.chunkBySize 3 |> Seq.map (Seq.map player)
+        let rows = Position.all |> Seq.chunkBySize 3 |> Seq.map (Seq.map player)
         let row r = String.Join(" ", Seq.map (map string >> defaultValue "_") r)
         in String.Join ("\n", Seq.map row rows)

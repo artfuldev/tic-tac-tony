@@ -13,8 +13,7 @@ module Executor =
 
     let private print game = printfn "%s" >> k game
 
-    let private handle next game cmd =
-        match cmd |> Commands.toDescription |> printfn "%s" |> k cmd with
+    let private handle next game = function
         | Exit -> 0
         | New -> NewGame |> next
         | Play move -> move |> make |> next

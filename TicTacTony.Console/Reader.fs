@@ -3,7 +3,7 @@
 open Parser
 open System
 open TicTacTony.Core
-
+open Helpers
 
 module Reader =
 
@@ -22,5 +22,5 @@ module Reader =
             in
                 match Console.ReadLine () |> parse with
                 | None -> let _ = printfn "invalid, try again" in read parse
-                | Some command -> command
+                | Some c -> c |> Commands.toDescription |> printfn "%s" |> k c
         in read parse
